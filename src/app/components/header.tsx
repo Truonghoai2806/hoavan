@@ -13,7 +13,7 @@ export default function Header() {
   return (
     <Navbar bg="light" expand="lg" className="mb-4 shadow-sm">
       <Container>
-        <Navbar.Brand href="/">🛍️ Hoa Van nenenene</Navbar.Brand>
+        <Navbar.Brand href="/">🛍️ Hoa Van</Navbar.Brand>
 
         <Navbar.Toggle aria-controls="navbar-content" />
         <Navbar.Collapse id="navbar-content">

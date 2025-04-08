@@ -44,8 +44,7 @@ export default function Footer() {
             <h5>Mạng xã hội</h5>
             <div className="social-icons">
               <a href="https://facebook.com" className="icon-button"><FaFacebook /></a>
-              <a href="https://instagram.com" className="icon-button"><FaInstagram /></a>git rev-parse --show-toplevel
-
+              <a href="https://instagram.com" className="icon-button"><FaInstagram /></a>
             </div>
           </Col>
         </Row>
