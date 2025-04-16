@@ -1,0 +1,62 @@
+.loginSection {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  background-color: #f8f9fa;
+  padding: 2rem 0;
+}
+
+.loginCard {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.divider {
+  text-align: center;
+  margin: 1.5rem 0;
+  position: relative;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 45%;
+  height: 1px;
+  background-color: #dee2e6;
+}
+
+.divider::before {
+  left: 0;
+}
+
+.divider::after {
+  right: 0;
+}
+
+.divider span {
+  background-color: white;
+  padding: 0 1rem;
+  position: relative;
+  color: #6c757d;
+}
+
+.link {
+  color: #000;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.link:hover {
+  color: #333;
+  text-decoration: underline;
+}
+
+@media (max-width: 576px) {
+  .loginCard {
+    padding: 1.5rem;
+  }
+} 

@@ -1,0 +1,235 @@
+.profileSection {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding: 2rem 0;
+  color: #333;
+}
+
+.sidebar {
+  margin-bottom: 2rem;
+}
+
+.sidebarCard {
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.avatarContainer {
+  text-align: center;
+  padding: 2rem 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+  font-size: 2.5rem;
+  color: #666;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.profileName {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.userEmail {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0;
+}
+
+.sidebarMenu {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0;
+}
+
+.menuItem {
+  color: #666;
+  text-decoration: none;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+  border: none;
+  background: none;
+  text-align: left;
+  border-left: 3px solid transparent;
+}
+
+.menuItem:hover {
+  color: #000;
+  background-color: #f8f9fa;
+  border-left-color: #000;
+}
+
+.activeMenuItem {
+  color: #000;
+  background-color: #f8f9fa;
+  border-left-color: #000;
+  font-weight: 500;
+}
+
+.mainCard {
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.cardHeader h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0;
+  color: #333;
+}
+
+.infoGroup {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.infoItem {
+  background-color: #f8f9fa;
+  padding: 1.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e0e0e0;
+  transition: transform 0.3s ease;
+}
+
+.infoItem:hover {
+  transform: translateY(-2px);
+}
+
+.infoLabel {
+  display: flex;
+  align-items: center;
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.infoLabel svg {
+  margin-right: 0.75rem;
+  color: #666;
+}
+
+.infoText {
+  font-size: 1rem;
+  color: #333;
+}
+
+.editButton {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 0.25rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #f8f9fa;
+  border: 1px solid #e0e0e0;
+  color: #333;
+}
+
+.editButton:hover {
+  background-color: #e9ecef;
+  color: #000;
+}
+
+.formControl {
+  background-color: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.25rem;
+  padding: 0.75rem;
+  color: #333;
+  width: 100%;
+}
+
+.formControl:focus {
+  background-color: white;
+  border-color: #000;
+  box-shadow: none;
+  color: #333;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.saveButton {
+  background-color: #000;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  border-radius: 0.25rem;
+  transition: all 0.3s ease;
+  flex: 1;
+  color: white;
+}
+
+.saveButton:hover {
+  background-color: #333;
+  transform: translateY(-2px);
+}
+
+.cancelButton {
+  border: 1px solid #e0e0e0;
+  color: #333;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  border-radius: 0.25rem;
+  transition: all 0.3s ease;
+  flex: 1;
+  background-color: white;
+}
+
+.cancelButton:hover {
+  background-color: #f8f9fa;
+  border-color: #000;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .infoGroup {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    margin-bottom: 1rem;
+  }
+
+  .cardHeader {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .editButton {
+    width: 100%;
+    justify-content: center;
+  }
+} 

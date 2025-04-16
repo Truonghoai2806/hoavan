@@ -1,0 +1,162 @@
+.loginSection {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  background-color: #f8f9fa;
+  padding: 2rem 0;
+}
+
+.loginCard {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.loginCard h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.formLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.formControl {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.75rem;
+  font-size: 14px;
+  width: 100%;
+  height: 40px;
+  color: #333;
+  background-color: #fff;
+  transition: all 0.3s ease;
+}
+
+.formControl:focus {
+  border-color: #000;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+  outline: none;
+}
+
+.divider {
+  text-align: center;
+  margin: 1.5rem 0;
+  position: relative;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 45%;
+  height: 1px;
+  background-color: #dee2e6;
+}
+
+.divider::before {
+  left: 0;
+}
+
+.divider::after {
+  right: 0;
+}
+
+.divider span {
+  background-color: white;
+  padding: 0 1rem;
+  position: relative;
+  color: #6c757d;
+  font-size: 14px;
+}
+
+.link {
+  color: #000;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.link:hover {
+  color: #333;
+  text-decoration: underline;
+}
+
+.btnDark {
+  background-color: #000;
+  border: none;
+  padding: 0.75rem;
+  font-size: 14px;
+  font-weight: 500;
+  width: 100%;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  outline: none;
+}
+
+.btnDark:hover {
+  background-color: #333;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btnDark:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.btnOutlineDark {
+  border: 1px solid #000;
+  color: #000;
+  padding: 0.75rem;
+  font-size: 14px;
+  font-weight: 500;
+  width: 100%;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  outline: none;
+}
+
+.btnOutlineDark:hover {
+  background-color: #000;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btnOutlineDark:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.alert {
+  margin-bottom: 1rem;
+  font-size: 14px;
+  border-radius: 4px;
+}
+
+@media (max-width: 576px) {
+  .loginCard {
+    padding: 1.5rem;
+  }
+} 

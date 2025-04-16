@@ -1,7 +1,8 @@
 'use client';
 import React from "react";
-import { Container, Row, Col, Button, Badge } from "react-bootstrap";
+import { Container, Button, Badge } from "react-bootstrap";
 
+// Dùng lại danh sách sản phẩm từ code1
 const newProducts = [
   {
     name: "Áo thun oversize",
@@ -29,35 +30,38 @@ const newProducts = [
     image: "https://down-vn.img.susercontent.com/file/vn-11134207-7ra0g-m844wnjtxzlu05.webp",
     tag: "New",
   },
+  {
+    name: "Chân váy caro",
+    price: 279000,
+    image: "https://down-vn.img.susercontent.com/file/vn-11134207-7ra0g-m844wnjtxzlu05.webp",
+    tag: "New",
+  },
 ];
 
-function formatPrice(price: number) {
+function formatPrice(price) {
   return price.toLocaleString("vi-VN") + "đ";
 }
 
-export default function NewArrivals() {
+export default function FeaturedProducts() {
   return (
-    <section className="py-5">
+    <section className="py-5" style={{ background: "#f9fafb" }}>
       <Container>
-        <h4 className="text-center fw-bold mb-4">Sản phẩm mới nhất</h4>
-        <Row className="g-4">
+        <h4 className="text-center fw-bold mb-4">Sản phẩm nổi bật</h4>
+        <div className="product-grid">
           {newProducts.map((product, index) => (
-            <Col key={index} xs={12} sm={6} md={3}>
+            <div key={index} className="product-item">
               <div className="product-card">
-                <div
-                  className="product-img"
-                  style={{ backgroundImage: `url(${product.image})` }}
-                >
+                <div className="product-img" style={{ backgroundImage: `url(${product.image})` }}>
                   {product.tag && (
                     <Badge bg="success" className="product-badge">
                       {product.tag}
                     </Badge>
                   )}
-                  <div className="hover-overlay d-flex gap-2 justify-content-center">
-                    <Button variant="light" size="sm">
+                  <div className="hover-overlay">
+                    <Button variant="light" size="sm" className="action-btn">
                       Mua ngay
                     </Button>
-                    <Button variant="dark" size="sm">
+                    <Button variant="dark" size="sm" className="action-btn">
                       + Giỏ
                     </Button>
                   </div>
@@ -76,12 +80,24 @@ export default function NewArrivals() {
                   )}
                 </div>
               </div>
-            </Col>
+            </div>
           ))}
-        </Row>
+        </div>
       </Container>
 
       <style jsx>{`
+        .product-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 24px;
+        }
+
+        @media (min-width: 1200px) {
+          .product-grid {
+            grid-template-columns: repeat(5, 1fr);
+          }
+        }
+
         .product-card {
           border-radius: 12px;
           overflow: hidden;
@@ -115,16 +131,25 @@ export default function NewArrivals() {
 
         .hover-overlay {
           position: absolute;
-          bottom: 12px;
+          bottom: 10px;
           left: 0;
           right: 0;
-          text-align: center;
+          display: flex;
+          justify-content: center;
+          gap: 10px;
           opacity: 0;
           transition: opacity 0.3s ease;
+          padding: 0 10px;
         }
 
         .product-img:hover .hover-overlay {
           opacity: 1;
+        }
+
+        .action-btn {
+          flex: 1;
+          min-width: 0;
+          white-space: nowrap;
         }
 
         @media (max-width: 576px) {
@@ -134,7 +159,14 @@ export default function NewArrivals() {
 
           .hover-overlay {
             flex-direction: column;
-            gap: 4px;
+            align-items: center;
+            gap: 6px;
+            bottom: 10px;
+            padding: 0 20px;
+          }
+
+          .action-btn {
+            width: 100%;
           }
         }
       `}</style>
