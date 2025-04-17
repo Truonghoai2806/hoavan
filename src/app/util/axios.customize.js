@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getSession } from "next-auth/react";
 
 // Set config defaults when creating the instance
 const instance = axios.create({
@@ -6,9 +7,15 @@ const instance = axios.create({
 });
 
 // Add a request interceptor
-instance.interceptors.request.use(function (config) {
-  // Do something before request is sent
-  config.headers.Authorization = `Bearer ${localStorage.getItem('access_token')}`;
+instance.interceptors.request.use(async function (config) {
+  // Get the session
+  const session = await getSession();
+  
+  // Add the token to the request if it exists
+  if (session?.jwt) {
+    config.headers.Authorization = `Bearer ${session.jwt}`;
+  }
+  
   return config;
 }, function (error) {
   // Do something with request error

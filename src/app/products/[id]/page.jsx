@@ -1,8 +1,9 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import { Container, Row, Col, Button, Badge } from 'react-bootstrap';
-import { getProductById } from '../../util/api';
+import { useParams, useRouter } from 'next/navigation';
+import { Container, Row, Col, Button, Badge, Toast } from 'react-bootstrap';
+import { getProductById, addToCart } from '../../util/api';
+import { useSession } from 'next-auth/react';
 import styles from './page.module.css';
 
 function formatPrice(price) {
@@ -11,11 +12,15 @@ function formatPrice(price) {
 
 export default function ProductDetail() {
   const { id } = useParams();
+  const router = useRouter();
+  const { data: session, status } = useSession();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   useEffect(() => {
     const getProductdetail = async () => {
@@ -69,10 +74,42 @@ export default function ProductDetail() {
     );
   }
 
-  const handleAddToCart = () => {
-    if (!selectedSiz) {
-      alert('Vui lòng chọn size');
+  const handleAddToCart = async () => {
+    if (!selectedSize) {
+      setToastMessage('Vui lòng chọn size');
+      setShowToast(true);
       return;
+    }
+
+    if (status === 'unauthenticated') {
+      setToastMessage('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng');
+      setShowToast(true);
+      router.push('/login');
+      return;
+    }
+
+    try {
+      const response = await addToCart({
+        productId: id,
+        size: selectedSize,
+        quantity: quantity,
+        token: session.accessToken
+      });
+
+      if (response) {
+        setToastMessage('Đã thêm sản phẩm vào giỏ hàng');
+        setShowToast(true);
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      if (error.message.includes('401')) {
+        setToastMessage('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại');
+        setShowToast(true);
+        router.push('/login');
+      } else {
+        setToastMessage(error.message || 'Có lỗi xảy ra khi thêm vào giỏ hàng');
+        setShowToast(true);
+      }
     }
   };
 
@@ -180,6 +217,24 @@ export default function ProductDetail() {
           </div>
         </Col>
       </Row>
+
+      <Toast 
+        show={showToast} 
+        onClose={() => setShowToast(false)} 
+        delay={3000} 
+        autohide
+        style={{
+          position: 'fixed',
+          top: 20,
+          right: 20,
+          zIndex: 1000
+        }}
+      >
+        <Toast.Header>
+          <strong className="me-auto">Thông báo</strong>
+        </Toast.Header>
+        <Toast.Body>{toastMessage}</Toast.Body>
+      </Toast>
     </Container>
   );
 }
