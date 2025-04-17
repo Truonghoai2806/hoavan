@@ -11,6 +11,7 @@ const callProtectedAPI = async () => {
   }
 
   const jwtToken = session?.jwt; // LẤY JWT từ session.jwt
+  console.log("JWT Token:", jwtToken);
   const baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   try {

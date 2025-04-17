@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Container, Button, Badge } from "react-bootstrap";
 import { getProducts } from "../util/api";
 import styles from "../../styles/newarrivals.module.css";
+import { useRouter } from "next/navigation";
 
 function formatPrice(price) {
   return price.toLocaleString("vi-VN") + "đ";
@@ -10,6 +11,7 @@ function formatPrice(price) {
 
 export default function NewArrivals() {
   const [products, setProducts] = useState([]);
+  const router = useRouter();
 
   useEffect(() => {
     const getProduct = async () => {
@@ -32,7 +34,7 @@ export default function NewArrivals() {
       <Container>
         <h4 className="text-center fw-bold mb-4">Sản phẩm mới nhất</h4>
         <div className={styles.productGrid}>
-          {products.map((item, index) => {
+          {products.map((item) => {
             const hasDiscount = item.discount > 0;
             // Giảm giá
             const discountedPrice = hasDiscount
@@ -40,7 +42,7 @@ export default function NewArrivals() {
               : item.price;
 
             return (
-              <div key={index} className={styles.productCard}>
+              <div key={item._id} className={styles.productCard}>
                 <div
                   className={styles.productImg}
                   style={{ backgroundImage: `url(${item.image})` }}
@@ -51,9 +53,18 @@ export default function NewArrivals() {
                     </Badge>
                   )}
                   <div className={styles.hoverOverlay}>
-                    <Button variant="light" size="sm" className={styles.actionBtn}>
+                    {/* <Button variant="light" size="sm" className={styles.actionBtn}>
+                      Mua ngay
+                    </Button> */}
+                    <Button
+                      variant="light"
+                      size="sm"
+                      className={styles.actionBtn}
+                      onClick={() => router.push(`/products/${item._id}`)}
+                    >
                       Mua ngay
                     </Button>
+
                     <Button variant="dark" size="sm" className={styles.actionBtn}>
                       + Giỏ
                     </Button>

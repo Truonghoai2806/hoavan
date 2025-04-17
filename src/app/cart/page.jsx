@@ -1,274 +1,132 @@
 'use client'
-import React, { useState } from "react";
-import { Container, Row, Col, Button, Form, Badge, Alert } from "react-bootstrap";
-import { FaTrash, FaMinus, FaPlus } from "react-icons/fa";
-import styles from "./page.module.css";
-
-const initialCartItems = [
-  {
-    id: 1,
-    name: "Áo thun oversize",
-    price: 299000,
-    originalPrice: 359000,
-    image: "https://down-vn.img.susercontent.com/file/vn-11134207-7ra0g-m844wnjtxzlu05.webp",
-    size: "M",
-    color: "Đen",
-    quantity: 1,
-  },
-  {
-    id: 2,
-    name: "Quần short kaki",
-    price: 349000,
-    image: "https://down-vn.img.susercontent.com/file/vn-11134207-7ra0g-m844wnjtxzlu05.webp",
-    size: "L",
-    color: "Xanh",
-    quantity: 2,
-  },
-  {
-    id: 3,
-    name: "Áo khoác gió nữ",
-    price: 429000,
-    originalPrice: 499000,
-    image: "https://down-vn.img.susercontent.com/file/vn-11134207-7ra0g-m844wnjtxzlu05.webp",
-    size: "S",
-    color: "Hồng",
-    quantity: 1,
-  },
-];
+import React, { useState, useEffect } from 'react';
+import { Container, Row, Col, Table, Button, Badge, Alert } from 'react-bootstrap';
+import { getCart } from '../util/api';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import styles from './page.module.css';
 
 function formatPrice(price) {
   return price.toLocaleString("vi-VN") + "đ";
 }
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState(initialCartItems);
-  const [couponCode, setCouponCode] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState(null);
-  const [shippingMethod, setShippingMethod] = useState("standard");
+  const [cart, setCart] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const router = useRouter();
+  const { data: session, status } = useSession();
 
-  const handleQuantityChange = (id, newQuantity) => {
-    if (newQuantity < 1) return;
-    setCartItems(prevItems =>
-      prevItems.map(item =>
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
-    );
-  };
+  useEffect(() => {
+    if (status === 'loading') return;
 
-  const handleRemoveItem = (id) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== id));
-  };
-
-  const handleApplyCoupon = () => {
-    // Simulate coupon validation
-    if (couponCode === "SALE10") {
-      setAppliedCoupon({
-        code: "SALE10",
-        discount: 0.1, // 10% discount
-      });
-    } else if (couponCode === "SALE20") {
-      setAppliedCoupon({
-        code: "SALE20",
-        discount: 0.2, // 20% discount
-      });
+    if (status === 'unauthenticated') {
+      setError('Vui lòng đăng nhập để xem giỏ hàng');
+      router.push('/login');
+      return;
     }
-  };
 
-  const calculateSubtotal = () => {
-    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
-  };
+    const fetchCart = async () => {
+      try {
+        const response = await getCart();
+        console.log('Cart response:', response);
+        if (response && response.data) {
+          setCart(response.data);
+        } else {
+          setError('Không thể lấy dữ liệu giỏ hàng');
+        }
+      } catch (error) {
+        console.error('Error fetching cart:', error);
+        if (error.response && error.response.status === 401) {
+          setError('Vui lòng đăng nhập để xem giỏ hàng');
+          router.push('/login');
+        } else {
+          setError('Có lỗi xảy ra khi tải giỏ hàng');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const calculateDiscount = () => {
-    if (!appliedCoupon) return 0;
-    return calculateSubtotal() * appliedCoupon.discount;
-  };
+    fetchCart();
+  }, [status, router]);
 
-  const calculateShipping = () => {
-    return shippingMethod === "standard" ? 30000 : 50000;
-  };
+  if (status === 'loading' || loading) {
+    return (
+      <Container className="py-5 text-center">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </Container>
+    );
+  }
 
-  const calculateTotal = () => {
-    return calculateSubtotal() - calculateDiscount() + calculateShipping();
-  };
+  if (error) {
+    return (
+      <Container className="py-5">
+        <Alert variant="danger">
+          {error}
+        </Alert>
+      </Container>
+    );
+  }
+
+  if (!cart || !cart.items || cart.items.length === 0) {
+    return (
+      <Container className="py-5 text-center">
+        <Alert variant="info">
+          <h4>Giỏ hàng trống</h4>
+          <p>Bạn chưa có sản phẩm nào trong giỏ hàng</p>
+          <Button variant="primary" onClick={() => router.push('/products')}>
+            Tiếp tục mua sắm
+          </Button>
+        </Alert>
+      </Container>
+    );
+  }
 
   return (
-    <section className="py-5" style={{ background: "#f5f5f5" }}>
-      <Container>
-        <h4 className="fw-bold mb-4">Giỏ hàng của bạn</h4>
-        
-        {cartItems.length === 0 ? (
-          <Alert variant="info" className="text-center">
-            Giỏ hàng của bạn đang trống. <a href="/products">Tiếp tục mua sắm</a>
-          </Alert>
-        ) : (
-          <Row>
-            <Col md={8}>
-              <div className="bg-white rounded shadow-sm p-3 mb-4">
-                <div className={styles.tableResponsive}>
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Sản phẩm</th>
-                        <th>Giá</th>
-                        <th>Số lượng</th>
-                        <th>Tổng</th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {cartItems.map(item => (
-                        <tr key={item.id}>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <img
-                                src={item.image}
-                                alt={item.name}
-                                style={{ width: "80px", height: "80px", objectFit: "cover" }}
-                                className="rounded me-3"
-                              />
-                              <div>
-                                <h6 className="mb-1">{item.name}</h6>
-                                <div className="d-flex gap-2">
-                                  <Badge bg="light" text="dark">
-                                    {item.size}
-                                  </Badge>
-                                  <Badge bg="light" text="dark">
-                                    {item.color}
-                                  </Badge>
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            {item.originalPrice ? (
-                              <div>
-                                <span className="text-danger fw-bold">
-                                  {formatPrice(item.price)}
-                                </span>
-                                <br />
-                                <del className="text-muted small">
-                                  {formatPrice(item.originalPrice)}
-                                </del>
-                              </div>
-                            ) : (
-                              formatPrice(item.price)
-                            )}
-                          </td>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <Button
-                                variant="outline-secondary"
-                                size="sm"
-                                className={`px-2 ${styles.btnOutlineSecondary}`}
-                                onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
-                              >
-                                <FaMinus />
-                              </Button>
-                              <Form.Control
-                                type="number"
-                                value={item.quantity}
-                                min={1}
-                                className="mx-2"
-                                style={{ width: "60px" }}
-                                onChange={(e) => handleQuantityChange(item.id, parseInt(e.target.value))}
-                              />
-                              <Button
-                                variant="outline-secondary"
-                                size="sm"
-                                className={`px-2 ${styles.btnOutlineSecondary}`}
-                                onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
-                              >
-                                <FaPlus />
-                              </Button>
-                            </div>
-                          </td>
-                          <td className="fw-bold">
-                            {formatPrice(item.price * item.quantity)}
-                          </td>
-                          <td>
-                            <Button
-                              variant="link"
-                              className="text-danger p-0"
-                              onClick={() => handleRemoveItem(item.id)}
-                            >
-                              <FaTrash />
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </Col>
-
-            <Col md={4}>
-              <div className="bg-white rounded shadow-sm p-3 mb-4">
-                <h6 className="mb-3">Tổng đơn hàng</h6>
-                
-                <div className="mb-3">
-                  <Form.Label>Mã giảm giá</Form.Label>
-                  <div className="d-flex gap-2">
-                    <Form.Control
-                      type="text"
-                      placeholder="Nhập mã giảm giá"
-                      value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value)}
-                    />
-                    <Button
-                      variant="outline-secondary"
-                      onClick={handleApplyCoupon}
-                    >
-                      Áp dụng
-                    </Button>
-                  </div>
-                  {appliedCoupon && (
-                    <Alert variant="success" className="mt-2 mb-0">
-                      Đã áp dụng mã {appliedCoupon.code} (-{appliedCoupon.discount * 100}%)
-                    </Alert>
-                  )}
-                </div>
-
-                <div className="mb-3">
-                  <Form.Label>Phương thức vận chuyển</Form.Label>
-                  <Form.Select
-                    value={shippingMethod}
-                    onChange={(e) => setShippingMethod(e.target.value)}
-                  >
-                    <option value="standard">Giao hàng tiêu chuẩn (30.000đ)</option>
-                    <option value="express">Giao hàng nhanh (50.000đ)</option>
-                  </Form.Select>
-                </div>
-
-                <div className="border-top pt-3">
-                  <div className="d-flex justify-content-between mb-2">
-                    <span>Tạm tính:</span>
-                    <span>{formatPrice(calculateSubtotal())}</span>
-                  </div>
-                  {appliedCoupon && (
-                    <div className="d-flex justify-content-between mb-2 text-success">
-                      <span>Giảm giá:</span>
-                      <span>-{formatPrice(calculateDiscount())}</span>
-                    </div>
-                  )}
-                  <div className="d-flex justify-content-between mb-2">
-                    <span>Phí vận chuyển:</span>
-                    <span>{formatPrice(calculateShipping())}</span>
-                  </div>
-                  <div className="d-flex justify-content-between fw-bold fs-5">
-                    <span>Tổng cộng:</span>
-                    <span className="text-danger">{formatPrice(calculateTotal())}</span>
+    <Container className="py-5">
+      <h2 className="mb-4">Giỏ hàng của bạn</h2>
+      <Table responsive>
+        <thead>
+          <tr>
+            <th>Sản phẩm</th>
+            <th>Size</th>
+            <th>Đơn giá</th>
+            <th>Số lượng</th>
+            <th>Thành tiền</th>
+          </tr>
+        </thead>
+        <tbody>
+          {cart.items.map((item) => (
+            <tr key={item._id}>
+              <td>
+                <div className="d-flex align-items-center">
+                  <img
+                    src={item.product.image}
+                    alt={item.product.name}
+                    className={styles.cartItemImage}
+                  />
+                  <div className="ms-3">
+                    <h6>{item.product.name}</h6>
                   </div>
                 </div>
-
-                <Button variant="danger" className="w-100 mt-3">
-                  Thanh toán
-                </Button>
-              </div>
-            </Col>
-          </Row>
-        )}
-      </Container>
-    </section>
+              </td>
+              <td>{item.size}</td>
+              <td>{formatPrice(item.product.price)}</td>
+              <td>{item.quantity}</td>
+              <td>{formatPrice(item.product.price * item.quantity)}</td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colSpan="4" className="text-end"><strong>Tổng tiền:</strong></td>
+            <td><strong>{formatPrice(cart.total)}</strong></td>
+          </tr>
+        </tfoot>
+      </Table>
+    </Container>
   );
 }

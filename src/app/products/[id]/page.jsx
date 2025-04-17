@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { Container, Row, Col, Button, Badge } from 'react-bootstrap';
 import { getProductById } from '../../util/api';
 import styles from './page.module.css';
@@ -9,39 +9,37 @@ function formatPrice(price) {
   return price.toLocaleString("vi-VN") + "đ";
 }
 
-export default function ProductDetail({ params }) {
+export default function ProductDetail() {
+  const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
-  const [selectedColor, setSelectedColor] = useState(null);
   const [quantity, setQuantity] = useState(1);
-  const router = useRouter();
-  
-  const unwrappedParams = React.use(params);
-  const productId = unwrappedParams.id;
 
   useEffect(() => {
-    const fetchProduct = async () => {
+    const getProductdetail = async () => {
       try {
-        const res = await getProductById(productId);
-        if (res?.data) {
-          setProduct(res.data);
+        const res = await getProductById(id);
+        if (res && res._id) {
+          const processedProduct = {
+            ...res,
+            sizes: Array.isArray(res.sizes) ? res.sizes.map(size => typeof size === 'object' ? size.size : size) : [],
+          };
+          setProduct(processedProduct);
         } else {
-          console.error('Product not found');
-          router.push('/404');
+          console.error('Invalid product data:', res);
+          setError('Không tìm thấy sản phẩm');
         }
       } catch (error) {
         console.error('Error fetching product:', error);
-        router.push('/404');
+        setError('Có lỗi xảy ra khi tải sản phẩm');
       } finally {
         setLoading(false);
       }
     };
-
-    if (productId) {
-      fetchProduct();
-    }
-  }, [productId, router]);
+    getProductdetail();
+  }, [id]);
 
   if (loading) {
     return (
@@ -53,29 +51,29 @@ export default function ProductDetail({ params }) {
     );
   }
 
+  if (error) {
+    return (
+      <Container className="py-5 text-center">
+        <h2 className="text-danger">{error}</h2>
+        <p>ID sản phẩm: {id}</p>
+      </Container>
+    );
+  }
+
   if (!product) {
     return (
       <Container className="py-5 text-center">
         <h2>Sản phẩm không tồn tại</h2>
-        <Button variant="primary" onClick={() => router.push('/')}>
-          Quay lại trang chủ
-        </Button>
+        <p>ID sản phẩm: {id}</p>
       </Container>
     );
   }
 
   const handleAddToCart = () => {
-    if (!selectedSize || !selectedColor) {
-      alert('Vui lòng chọn size và màu sắc');
+    if (!selectedSiz) {
+      alert('Vui lòng chọn size');
       return;
     }
-    // TODO: Thêm vào giỏ hàng
-    console.log({
-      productId: product._id,
-      size: selectedSize,
-      color: selectedColor,
-      quantity
-    });
   };
 
   const originalPrice = product.price;
@@ -87,22 +85,17 @@ export default function ProductDetail({ params }) {
       <Row>
         <Col md={6}>
           <div className={styles.productImageContainer}>
-            <img 
-              src={product.image} 
+            <img
+              src={product.image}
               alt={product.name}
               className={styles.productImage}
             />
-            {product.discount > 0 && (
-              <Badge bg="danger" className={styles.discountBadge}>
-                -{product.discount}%
-              </Badge>
-            )}
           </div>
         </Col>
         <Col md={6}>
           <div className={styles.productInfo}>
             <h1 className={styles.productName}>{product.name}</h1>
-            
+
             <div className={styles.priceSection}>
               {product.discount > 0 ? (
                 <>
@@ -112,6 +105,9 @@ export default function ProductDetail({ params }) {
                   <span className={styles.originalPrice}>
                     {formatPrice(originalPrice)}
                   </span>
+                  <Badge bg="danger" className={styles.discountBadge}>
+                    -{product.discount}%
+                  </Badge>
                 </>
               ) : (
                 <span className={styles.price}>
@@ -121,16 +117,12 @@ export default function ProductDetail({ params }) {
             </div>
 
             <div className={styles.description}>
-              {product.description}
+             Mô tả: {product.description}
             </div>
 
             <div className={styles.details}>
               <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Danh mục:</span>
-                <span className={styles.detailValue}>{product.category}</span>
-              </div>
-              <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Giới tính:</span>
+                <span className={styles.detailLabel}>Giới tính: </span>
                 <span className={styles.detailValue}>{product.gender}</span>
               </div>
             </div>
@@ -150,24 +142,10 @@ export default function ProductDetail({ params }) {
               </div>
             </div>
 
-            <div className={styles.colorSection}>
-              <h4>Màu sắc</h4>
-              <div className={styles.colorList}>
-                {product.colors.map((color, index) => (
-                  <button
-                    key={index}
-                    className={`${styles.colorItem} ${selectedColor === color ? styles.selected : ''}`}
-                    style={{ backgroundColor: color }}
-                    onClick={() => setSelectedColor(color)}
-                  />
-                ))}
-              </div>
-            </div>
-
             <div className={styles.quantitySection}>
               <h4>Số lượng</h4>
               <div className={styles.quantityControl}>
-                <button 
+                <button
                   className={styles.quantityButton}
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
                 >
@@ -180,7 +158,7 @@ export default function ProductDetail({ params }) {
                   onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
                   className={styles.quantityInput}
                 />
-                <button 
+                <button
                   className={styles.quantityButton}
                   onClick={() => setQuantity(quantity + 1)}
                 >
@@ -190,17 +168,9 @@ export default function ProductDetail({ params }) {
             </div>
 
             <div className={styles.actionButtons}>
-              <Button 
-                variant="primary" 
-                size="lg" 
-                className={styles.buyNowButton}
-                onClick={handleAddToCart}
-              >
-                Mua ngay
-              </Button>
-              <Button 
-                variant="outline-primary" 
-                size="lg" 
+              <Button
+                variant="primary"
+                size="lg"
                 className={styles.addToCartButton}
                 onClick={handleAddToCart}
               >
@@ -212,4 +182,4 @@ export default function ProductDetail({ params }) {
       </Row>
     </Container>
   );
-} 
+}
