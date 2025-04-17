@@ -1,175 +1,84 @@
 'use client';
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Container, Button, Badge } from "react-bootstrap";
-
-// Dùng lại danh sách sản phẩm từ code1
-const newProducts = [
-  {
-    name: "Áo thun oversize",
-    price: 299000,
-    originalPrice: 359000,
-    image: "https://down-vn.img.susercontent.com/file/vn-11134207-7ra0g-m844wnjtxzlu05.webp",
-    tag: "New",
-  },
-  {
-    name: "Quần short kaki",
-    price: 349000,
-    image: "https://down-vn.img.susercontent.com/file/vn-11134207-7ra0g-m844wnjtxzlu05.webp",
-    tag: "New",
-  },
-  {
-    name: "Áo khoác gió nữ",
-    price: 429000,
-    originalPrice: 499000,
-    image: "https://down-vn.img.susercontent.com/file/vn-11134207-7ra0g-m844wnjtxzlu05.webp",
-    tag: "New",
-  },
-  {
-    name: "Váy suông công sở",
-    price: 489000,
-    image: "https://down-vn.img.susercontent.com/file/vn-11134207-7ra0g-m844wnjtxzlu05.webp",
-    tag: "New",
-  },
-  {
-    name: "Chân váy caro",
-    price: 279000,
-    image: "https://down-vn.img.susercontent.com/file/vn-11134207-7ra0g-m844wnjtxzlu05.webp",
-    tag: "New",
-  },
-];
+import { getProducts } from "../util/api";
+import styles from "../../styles/featuredproducts.module.css";
 
 function formatPrice(price) {
   return price.toLocaleString("vi-VN") + "đ";
 }
 
 export default function FeaturedProducts() {
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    const getProduct = async () => {
+      const res = await getProducts();
+      if (!res?.message) {
+        const featuredProducts = res.filter(item => item.tags.includes("featured"));
+        setProducts(featuredProducts);
+      } else {
+        notification.error({
+          message: "Get user failed",
+          description: res.message,
+        });
+      }
+    };
+    getProduct();
+  }, []);
+
   return (
     <section className="py-5" style={{ background: "#f9fafb" }}>
       <Container>
         <h4 className="text-center fw-bold mb-4">Sản phẩm nổi bật</h4>
-        <div className="product-grid">
-          {newProducts.map((product, index) => (
-            <div key={index} className="product-item">
-              <div className="product-card">
-                <div className="product-img" style={{ backgroundImage: `url(${product.image})` }}>
-                  {product.tag && (
-                    <Badge bg="success" className="product-badge">
-                      {product.tag}
+        <div className={styles.productGrid}>
+          {products.map((item, index) => {
+            const hasDiscount = item.discount > 0;
+            // Giảm giá
+            const discountedPrice = hasDiscount
+              ? item.price * (1 - item.discount / 100)
+              : item.price;
+
+            return (
+              <div key={index} className={styles.productCard}>
+                <div
+                  className={styles.productImg}
+                  style={{ backgroundImage: `url(${item.image})` }}
+                >
+                  {item.tag && (
+                    <Badge bg="success" className={styles.productBadge}>
+                      {item.tag}
                     </Badge>
                   )}
-                  <div className="hover-overlay">
-                    <Button variant="light" size="sm" className="action-btn">
+                  <div className={styles.hoverOverlay}>
+                    <Button variant="light" size="sm" className={styles.actionBtn}>
                       Mua ngay
                     </Button>
-                    <Button variant="dark" size="sm" className="action-btn">
+                    <Button variant="dark" size="sm" className={styles.actionBtn}>
                       + Giỏ
                     </Button>
                   </div>
                 </div>
                 <div className="product-info text-center py-3">
-                  <h6 className="mb-1">{product.name}</h6>
-                  {product.originalPrice ? (
+                  <h6 className="mb-1">{item.name}</h6>
+                  {hasDiscount ? (
                     <p className="mb-0">
                       <span className="text-danger fw-bold me-2">
-                        {formatPrice(product.price)}
+                        {formatPrice(discountedPrice)}
                       </span>
-                      <del className="text-muted">{formatPrice(product.originalPrice)}</del>
+                      <del className="text-muted">
+                        {formatPrice(item.price)} 
+                      </del>
                     </p>
                   ) : (
-                    <p className="text-muted mb-0">{formatPrice(product.price)}</p>
+                    <p className="text-muted mb-0">{formatPrice(item.price)}</p>
                   )}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </Container>
-
-      <style jsx>{`
-        .product-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-          gap: 24px;
-        }
-
-        @media (min-width: 1200px) {
-          .product-grid {
-            grid-template-columns: repeat(5, 1fr);
-          }
-        }
-
-        .product-card {
-          border-radius: 12px;
-          overflow: hidden;
-          background: #fff;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-          transition: transform 0.3s ease;
-          padding: 12px;
-        }
-
-        .product-card:hover {
-          transform: translateY(-5px);
-        }
-
-        .product-img {
-          height: 200px;
-          background-repeat: no-repeat;
-          background-position: center;
-          background-size: contain;
-          border-radius: 10px;
-          position: relative;
-        }
-
-        .product-badge {
-          position: absolute;
-          top: 8px;
-          left: 8px;
-          font-size: 0.75rem;
-          padding: 4px 8px;
-          border-radius: 6px;
-        }
-
-        .hover-overlay {
-          position: absolute;
-          bottom: 10px;
-          left: 0;
-          right: 0;
-          display: flex;
-          justify-content: center;
-          gap: 10px;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-          padding: 0 10px;
-        }
-
-        .product-img:hover .hover-overlay {
-          opacity: 1;
-        }
-
-        .action-btn {
-          flex: 1;
-          min-width: 0;
-          white-space: nowrap;
-        }
-
-        @media (max-width: 576px) {
-          .product-img {
-            height: 150px;
-          }
-
-          .hover-overlay {
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            bottom: 10px;
-            padding: 0 20px;
-          }
-
-          .action-btn {
-            width: 100%;
-          }
-        }
-      `}</style>
     </section>
   );
 }

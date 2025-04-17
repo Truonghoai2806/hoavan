@@ -1,6 +1,7 @@
 import GoogleProvider from "next-auth/providers/google";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import clientPromise from "./mongodb";
+import jwt from 'jsonwebtoken';
 
 export const authOptions = {
     providers: [
@@ -26,7 +27,7 @@ export const authOptions = {
                 token.email = user.email;
                 token.name = user.name;
                 token.picture = user.image;
-                token.phone = user.phone || null;
+                // token.phone = user.phone || null;
             }
             return token;
         },
@@ -35,6 +36,16 @@ export const authOptions = {
             session.user.email = token.email;
             session.user.name = token.name;
             session.user.image = token.picture;
+            
+            // Tạo JWT token đơn giản hơn
+            const payload = {
+                id: token.id,
+                email: token.email,
+                name: token.name
+            };
+            
+            // Sử dụng cùng NEXTAUTH_SECRET key với BE
+            session.jwt = jwt.sign(payload, process.env.NEXTAUTH_SECRET);
             return session;
         },
         async signIn({ profile }) {

@@ -1,5 +1,4 @@
 "use client";
-
 import React from "react";
 import { Carousel, Button, Container } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
