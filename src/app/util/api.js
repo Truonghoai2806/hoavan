@@ -19,9 +19,13 @@ const addToCart = (data) => {
     return axios.post(URL_API, data);
 };
 
-const getCart = () => {
+const getCart = (token) => {
     const URL_API = "/cart";
-    return axios.get(URL_API);
+    return axios.get(URL_API, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
 };
 
 export { getCategories, getProducts, getProductById, addToCart, getCart };
