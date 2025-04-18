@@ -46,29 +46,13 @@ export default function NewArrivals() {
                 <div
                   className={styles.productImg}
                   style={{ backgroundImage: `url(${item.image})` }}
+                  onClick={() => router.push(`/products/${item._id}`)}
                 >
                   {item.tag && (
                     <Badge bg="success" className={styles.productBadge}>
                       {item.tag}
                     </Badge>
                   )}
-                  <div className={styles.hoverOverlay}>
-                    {/* <Button variant="light" size="sm" className={styles.actionBtn}>
-                      Mua ngay
-                    </Button> */}
-                    <Button
-                      variant="light"
-                      size="sm"
-                      className={styles.actionBtn}
-                      onClick={() => router.push(`/products/${item._id}`)}
-                    >
-                      Mua ngay
-                    </Button>
-
-                    <Button variant="dark" size="sm" className={styles.actionBtn}>
-                      + Giỏ
-                    </Button>
-                  </div>
                 </div>
                 <div className="product-info text-center py-3">
                   <h6 className="mb-1">{item.name}</h6>

@@ -1,0 +1,93 @@
+.productGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+@media (min-width: 1200px) {
+  .productGrid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.productCard {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+  padding: 12px;
+}
+
+.productCard:hover {
+  transform: translateY(-5px);
+}
+
+.productImg {
+  height: 250px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  border-radius: 10px;
+  position: relative;
+}
+
+.productBadge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+
+
+.productImg:hover {
+  opacity: 1;
+}
+
+.filterSection {
+  transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .productImg {
+    height: 150px;
+  }
+
+  .filterSection {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    padding: 20px;
+    overflow-y: auto;
+  }
+
+  .filterSection.d-none {
+    display: none !important;
+  }
+
+  .filterSection .bg-white {
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+  }
+}
+
+@media (min-width: 768px) {
+  .filterSection {
+    position: sticky;
+    top: 20px;
+    height: fit-content;
+    max-width: 250px;
+  }
+
+  .filterSection.d-none {
+    display: none !important;
+  }
+}

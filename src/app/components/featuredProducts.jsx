@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Container, Button, Badge } from "react-bootstrap";
 import { getProducts } from "../util/api";
 import styles from "../../styles/featuredproducts.module.css";
+import { useRouter } from "next/navigation";
 
 function formatPrice(price) {
   return price.toLocaleString("vi-VN") + "đ";
@@ -10,6 +11,7 @@ function formatPrice(price) {
 
 export default function FeaturedProducts() {
   const [products, setProducts] = useState([]);
+  const router = useRouter();
 
   useEffect(() => {
     const getProduct = async () => {
@@ -44,20 +46,14 @@ export default function FeaturedProducts() {
                 <div
                   className={styles.productImg}
                   style={{ backgroundImage: `url(${item.image})` }}
+                  onClick={() => router.push(`/products/${item._id}`)}
                 >
                   {item.tag && (
                     <Badge bg="success" className={styles.productBadge}>
                       {item.tag}
                     </Badge>
                   )}
-                  <div className={styles.hoverOverlay}>
-                    <Button variant="light" size="sm" className={styles.actionBtn}>
-                      Mua ngay
-                    </Button>
-                    <Button variant="dark" size="sm" className={styles.actionBtn}>
-                      + Giỏ
-                    </Button>
-                  </div>
+
                 </div>
                 <div className="product-info text-center py-3">
                   <h6 className="mb-1">{item.name}</h6>
