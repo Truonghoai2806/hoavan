@@ -4,11 +4,14 @@ import Link from "next/link";
 import { Container, Navbar, Nav } from "react-bootstrap";
 import { FaShoppingCart, FaUser, FaSearch } from "react-icons/fa";
 import { useSession, signOut } from "next-auth/react";
+import { useRouter } from 'next/navigation';
 import styles from '../../styles/header.module.css';
 
 export default function Header() {
   const { data: session } = useSession();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [keyword, setKeyword] = useState('');
+  const router = useRouter();
 
   // Toggle dropdown visibility
   const handleAvatarClick = (e) => {
@@ -24,14 +27,23 @@ export default function Header() {
   };
 
   useEffect(() => {
-    // Add click event listener to document
     document.addEventListener("click", handleClickOutside);
-    
-    // Cleanup event listener on component unmount
     return () => {
       document.removeEventListener("click", handleClickOutside);
     };
   }, []);
+
+  // Xử lý tìm kiếm
+  const handleSearch = () => {
+    if (!keyword.trim()) return;
+    router.push(`/products?search=${encodeURIComponent(keyword.trim())}`);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
   return (
     <Navbar bg="light" expand="lg" className="mb-4 shadow-sm">
@@ -49,8 +61,8 @@ export default function Header() {
             <Link href="/products" passHref legacyBehavior>
               <Nav.Link>Sản phẩm</Nav.Link>
             </Link>
-            <Link href="/deals" passHref legacyBehavior>
-              <Nav.Link>Khuyến mãi</Nav.Link>
+            <Link href="/checkout" passHref legacyBehavior>
+              <Nav.Link>Thanh toán</Nav.Link>
             </Link>
             <Link href="/contact" passHref legacyBehavior>
               <Nav.Link>Liên hệ</Nav.Link>
@@ -62,8 +74,11 @@ export default function Header() {
               type="text"
               className={styles['search-input']}
               placeholder="Tìm kiếm sản phẩm..."
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              onKeyDown={handleKeyDown}
             />
-            <button className={styles['search-button']} aria-label="Tìm">
+            <button className={styles['search-button']} aria-label="Tìm" onClick={handleSearch}>
               <FaSearch />
             </button>
           </div>
@@ -87,7 +102,6 @@ export default function Header() {
                   )}
                 </div>
 
-                {/* Dropdown menu */}
                 {isDropdownOpen && (
                   <div className={styles.dropdownMenu}>
                     <Link href="/profile" className={styles.dropdownItem}>

@@ -35,9 +35,9 @@ const updateCartItem = async (itemId, data, token) => {
         });
         return { success: true, cart: response.cart };
     } catch (error) {
-        return { 
-            success: false, 
-            message: error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật giỏ hàng' 
+        return {
+            success: false,
+            message: error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật giỏ hàng'
         };
     }
 };
@@ -49,11 +49,16 @@ const removeFromCart = async (itemId, token) => {
         });
         return { success: true };
     } catch (error) {
-        return { 
-            success: false, 
-            message: error.response?.data?.message || 'Có lỗi xảy ra khi xóa sản phẩm' 
+        return {
+            success: false,
+            message: error.response?.data?.message || 'Có lỗi xảy ra khi xóa sản phẩm'
         };
     }
 };
 
-export { getCategories, getProducts, getProductById, addToCart, getCart, removeFromCart, updateCartItem };
+const searchProduct = (name) => {
+    const URL_API = `/product/search?name=${encodeURIComponent(name)}`;
+    return axios.get(URL_API);
+};
+
+export { getCategories, getProducts, getProductById, addToCart, getCart, removeFromCart, updateCartItem, searchProduct };

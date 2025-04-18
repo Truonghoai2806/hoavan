@@ -154,7 +154,7 @@ export default function ProductDetail() {
             </div>
 
             <div className={styles.description}>
-             Mô tả: {product.description}
+              Mô tả: {product.description}
             </div>
 
             <div className={styles.details}>
@@ -206,22 +206,23 @@ export default function ProductDetail() {
 
             <div className={styles.actionButtons}>
               <Button
-                variant="primary"
+                variant="outline-dark"
                 size="lg"
                 className={styles.addToCartButton}
                 onClick={handleAddToCart}
               >
                 Thêm vào giỏ hàng
               </Button>
+
             </div>
           </div>
         </Col>
       </Row>
 
-      <Toast 
-        show={showToast} 
-        onClose={() => setShowToast(false)} 
-        delay={3000} 
+      <Toast
+        show={showToast}
+        onClose={() => setShowToast(false)}
+        delay={3000}
         autohide
         style={{
           position: 'fixed',

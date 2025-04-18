@@ -1,39 +1,35 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Card, Form, Button } from "react-bootstrap";
-import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaEdit, FaSave, FaTimes, FaLock, FaHistory, FaHeart, FaShoppingBag } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaEdit, FaSave, FaTimes } from "react-icons/fa";
+import { useSession } from "next-auth/react";
 import styles from "./page.module.css";
 
 export default function ProfilePage() {
+  const { data: session } = useSession();
   const [isEditing, setIsEditing] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [formData, setFormData] = useState({
-    name: "Nguyễn Văn A",
-    email: "nguyenvana@example.com",
-    phone: "0123456789",
-    address: "123 Đường ABC, Quận XYZ, TP.HCM"
+    name: "",
+    email: "",
+    phone: "",
+    address: ""
   });
 
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: ""
-  });
-
-  const [activeTab, setActiveTab] = useState("profile");
+  useEffect(() => {
+    if (session?.user) {
+      setFormData({
+        name: session.user.name || "Người dùng",
+        email: session.user.email || "",
+        phone: session.user.phone || "",
+        address: session.user.address || ""
+      });
+    }
+  }, [session]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handlePasswordChange = (e) => {
-    const { name, value } = e.target;
-    setPasswordData(prev => ({
       ...prev,
       [name]: value
     }));
@@ -48,102 +44,7 @@ export default function ProfilePage() {
     setIsEditing(false);
   };
 
-  const handlePasswordSave = () => {
-    // TODO: Xử lý đổi mật khẩu
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert("Mật khẩu mới không khớp!");
-      return;
-    }
-    setIsChangingPassword(false);
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: ""
-    });
-  };
-
-  const handlePasswordCancel = () => {
-    setIsChangingPassword(false);
-    setPasswordData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: ""
-    });
-  };
-
   const renderProfileContent = () => {
-    if (activeTab === "password") {
-      return (
-        <div>
-          <div className={styles.cardHeader}>
-            <h2>Đổi mật khẩu</h2>
-          </div>
-          <div className={styles.infoGroup}>
-            <div className={styles.infoItem}>
-              <div className={styles.infoLabel}>
-                <FaLock className="me-2" />
-                Mật khẩu hiện tại
-              </div>
-              <Form.Control
-                type="password"
-                name="currentPassword"
-                value={passwordData.currentPassword}
-                onChange={handlePasswordChange}
-                className={styles.formControl}
-                placeholder="Nhập mật khẩu hiện tại"
-              />
-            </div>
-            <div className={styles.infoItem}>
-              <div className={styles.infoLabel}>
-                <FaLock className="me-2" />
-                Mật khẩu mới
-              </div>
-              <Form.Control
-                type="password"
-                name="newPassword"
-                value={passwordData.newPassword}
-                onChange={handlePasswordChange}
-                className={styles.formControl}
-                placeholder="Nhập mật khẩu mới"
-              />
-            </div>
-            <div className={styles.infoItem}>
-              <div className={styles.infoLabel}>
-                <FaLock className="me-2" />
-                Xác nhận mật khẩu mới
-              </div>
-              <Form.Control
-                type="password"
-                name="confirmPassword"
-                value={passwordData.confirmPassword}
-                onChange={handlePasswordChange}
-                className={styles.formControl}
-                placeholder="Nhập lại mật khẩu mới"
-              />
-            </div>
-          </div>
-          <div className={styles.buttonGroup}>
-            <Button
-              variant="primary"
-              className={styles.saveButton}
-              onClick={handlePasswordSave}
-            >
-              <FaSave className="me-2" />
-              Lưu mật khẩu
-            </Button>
-            <Button
-              variant="outline-secondary"
-              className={styles.cancelButton}
-              onClick={handlePasswordCancel}
-            >
-              <FaTimes className="me-2" />
-              Hủy
-            </Button>
-          </div>
-        </div>
-      );
-    }
-
     return (
       <div>
         <div className={styles.cardHeader}>
@@ -240,6 +141,10 @@ export default function ProfilePage() {
     );
   };
 
+  if (!session) {
+    return <div>Vui lòng đăng nhập để xem thông tin cá nhân.</div>;
+  }
+
   return (
     <section className={styles.profileSection}>
       <Container>
@@ -248,44 +153,30 @@ export default function ProfilePage() {
           <Col md={3} className={styles.sidebar}>
             <Card className={styles.sidebarCard}>
               <div className={styles.avatarContainer}>
-                <div className={styles.avatar}>
-                  <FaUser />
+                <div className={styles.image}>
+                  {session.user?.image ? (
+                    <img
+                      src={session.user.image}
+                      alt="Avatar"
+                      className={styles.avatar} 
+                    />
+                  ) : (
+                    <FaUser className={styles.avatar} />
+                  )}
                 </div>
-                <h3 className={styles.profileName}>{formData.name}</h3>
-                <p className={styles.userEmail}>{formData.email}</p>
+                <h3 className={styles.profileName}>{session.user?.name || formData.name}</h3>
+                <p className={styles.userEmail}>{session.user?.email || formData.email}</p>
               </div>
               <div className={styles.sidebarMenu}>
-                <Button 
-                  variant="link" 
-                  className={`${styles.menuItem} ${activeTab === "profile" ? styles.activeMenuItem : ""}`}
-                  onClick={() => setActiveTab("profile")}
-                >
+                <Button variant="link" className={styles.menuItem}>
                   <FaUser className="me-2" />
                   Thông tin cá nhân
                 </Button>
-                <Button 
-                  variant="link" 
-                  className={`${styles.menuItem} ${activeTab === "password" ? styles.activeMenuItem : ""}`}
-                  onClick={() => setActiveTab("password")}
-                >
-                  <FaLock className="me-2" />
-                  Đổi mật khẩu
-                </Button>
-                <Button variant="link" className={styles.menuItem}>
-                  <FaHistory className="me-2" />
-                  Lịch sử đơn hàng
-                </Button>
-                <Button variant="link" className={styles.menuItem}>
-                  <FaHeart className="me-2" />
-                  Sản phẩm yêu thích
-                </Button>
-                <Button variant="link" className={styles.menuItem}>
-                  <FaShoppingBag className="me-2" />
-                  Giỏ hàng
-                </Button>
+                {/* Các item khác trong menu */}
               </div>
             </Card>
           </Col>
+
 
           {/* Main Content */}
           <Col md={9}>
@@ -299,4 +190,4 @@ export default function ProfilePage() {
       </Container>
     </section>
   );
-} 
+}

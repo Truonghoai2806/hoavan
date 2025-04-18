@@ -1,9 +1,9 @@
 'use client';
 import React, { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Container, Button, Badge, Form, Row, Col, Pagination } from "react-bootstrap";
 import { FaTimes, FaFilter } from "react-icons/fa";
-import { getProducts } from "../util/api";
-import { useRouter } from "next/navigation";
+import { getProducts, searchProduct } from "../util/api";
 import styles from "./page.module.css";
 
 function formatPrice(price) {
@@ -19,12 +19,22 @@ export default function ProductsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const PRODUCTS_PER_PAGE = 10;
 
+  const searchParams = useSearchParams();
+  const searchKeyword = searchParams.get('search')?.toLowerCase() || '';
+
   const router = useRouter();
 
   useEffect(() => {
     const fetchProducts = async () => {
+      setLoading(true);
       try {
-        const response = await getProducts();
+        let response;
+        if (searchKeyword) {
+          response = await searchProduct(searchKeyword);
+        } else {
+          response = await getProducts();
+        }
+
         if (!response?.message) {
           setProducts(response);
         } else {
@@ -38,13 +48,13 @@ export default function ProductsPage() {
     };
 
     fetchProducts();
-  }, []);
+  }, [searchKeyword]);
 
   const categories = Array.from(new Set(products.map(product => product.category?.name || product.category))).filter(Boolean);
 
   const filteredProducts = products.filter(product => {
     const priceMatch = product.price >= priceRange[0] && product.price <= priceRange[1];
-    const categoryMatch = selectedCategories.length === 0 || 
+    const categoryMatch = selectedCategories.length === 0 ||
       (product.category && selectedCategories.includes(product.category?.name || product.category));
     return priceMatch && categoryMatch;
   });
@@ -56,8 +66,8 @@ export default function ProductsPage() {
   );
 
   const handleCategoryChange = (category) => {
-    setSelectedCategories(prev => 
-      prev.includes(category) 
+    setSelectedCategories(prev =>
+      prev.includes(category)
         ? prev.filter(c => c !== category)
         : [...prev, category]
     );
@@ -158,10 +168,12 @@ export default function ProductsPage() {
     <section className="py-5" style={{ background: "#f5f5f5" }}>
       <Container>
         <div className="d-flex justify-content-between align-items-center mb-4">
-          <h4 className="fw-bold mb-0">Tất cả sản phẩm</h4>
-          <Button 
-            variant="outline-secondary" 
-            size="sm" 
+          <h4 className="fw-bold mb-0">
+            {searchKeyword ? `Kết quả tìm kiếm cho "${searchKeyword}"` : "Tất cả sản phẩm"}
+          </h4>
+          <Button
+            variant="outline-secondary"
+            size="sm"
             onClick={() => setShowFilters(!showFilters)}
             className="d-flex align-items-center gap-2"
           >
@@ -169,7 +181,7 @@ export default function ProductsPage() {
             {showFilters ? "Ẩn bộ lọc" : "Hiện bộ lọc"}
           </Button>
         </div>
-        
+
         <Row>
           {/* Bộ lọc */}
           <Col md={2} className={`${styles.filterSection} ${!showFilters ? 'd-none' : ''}`}>
@@ -177,17 +189,17 @@ export default function ProductsPage() {
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <h6 className="mb-0">Bộ lọc</h6>
                 <div className="d-flex gap-2">
-                  <Button 
-                    variant="link" 
-                    size="sm" 
+                  <Button
+                    variant="link"
+                    size="sm"
                     className="text-decoration-none p-0"
                     onClick={clearFilters}
                   >
                     Xóa bộ lọc
                   </Button>
-                  <Button 
-                    variant="link" 
-                    size="sm" 
+                  <Button
+                    variant="link"
+                    size="sm"
                     className="text-decoration-none p-0 d-md-none"
                     onClick={() => setShowFilters(false)}
                   >
@@ -195,7 +207,7 @@ export default function ProductsPage() {
                   </Button>
                 </div>
               </div>
-              
+
               <Form.Group className="mb-4">
                 <Form.Label>Khoảng giá</Form.Label>
                 <Form.Range
@@ -210,7 +222,7 @@ export default function ProductsPage() {
                   <span>{formatPrice(priceRange[1])}</span>
                 </div>
               </Form.Group>
-              
+
               <Form.Group>
                 <Form.Label>Danh mục</Form.Label>
                 <div className="d-flex flex-column gap-2">
@@ -232,39 +244,45 @@ export default function ProductsPage() {
 
           {/* Danh sách sản phẩm */}
           <Col md={showFilters ? 10 : 12}>
-            <div className={styles.productGrid}>
-              {paginatedProducts.map((product) => (
-                <div key={product._id} className={styles.productCard}>
-                  <div
-                    className={styles.productImg}
-                    style={{ backgroundImage: `url(${product.image})` }}
-                    onClick={() => router.push(`/products/${product._id}`)}
-                  >
-                    {product.tag && (
-                      <Badge bg={product.tag === "New" ? "success" : "danger"} className={styles.productBadge}>
-                        {product.tag}
-                      </Badge>
-                    )}
-                   
-                  </div>
-                  <div className="product-info text-center py-3">
-                    <h6 className="mb-1">{product.name}</h6>
-                    {product.originalPrice ? (
-                      <p className="mb-0">
-                        <span className="text-danger fw-bold me-2">
-                          {formatPrice(product.price)}
-                        </span>
-                        <del className="text-muted">{formatPrice(product.originalPrice)}</del>
-                      </p>
-                    ) : (
-                      <p className="text-muted mb-0">{formatPrice(product.price)}</p>
-                    )}
-                  </div>
+            {filteredProducts.length === 0 ? (
+              <div className="text-center text-muted py-5">
+                Không tìm thấy sản phẩm nào.
+              </div>
+            ) : (
+              <>
+                <div className={styles.productGrid}>
+                  {paginatedProducts.map((product) => (
+                    <div key={product._id} className={styles.productCard}>
+                      <div
+                        className={styles.productImg}
+                        style={{ backgroundImage: `url(${product.image})` }}
+                        onClick={() => router.push(`/products/${product._id}`)}
+                      >
+                        {product.tag && (
+                          <Badge bg={product.tag === "New" ? "success" : "danger"} className={styles.productBadge}>
+                            {product.tag}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="product-info text-center py-3">
+                        <h6 className="mb-1">{product.name}</h6>
+                        {product.originalPrice ? (
+                          <p className="mb-0">
+                            <span className="text-danger fw-bold me-2">
+                              {formatPrice(product.price)}
+                            </span>
+                            <del className="text-muted">{formatPrice(product.originalPrice)}</del>
+                          </p>
+                        ) : (
+                          <p className="text-muted mb-0">{formatPrice(product.price)}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-
-            {renderPagination()}
+                {renderPagination()}
+              </>
+            )}
           </Col>
         </Row>
       </Container>

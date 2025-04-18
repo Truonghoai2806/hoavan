@@ -176,13 +176,13 @@
     letter-spacing: 1px;
     border-radius: 4px;
     transition: all 0.3s ease;
-    background-color: #007bff;
+    background-color: black;
     border: none;
     color: white;
 }
 
 .addToCartButton:hover {
-    background-color: #0056b3;
+    background-color: #333;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
@@ -200,3 +200,5 @@
     font-size: 0.875rem;
     color: #666;
 } 
+
+  
