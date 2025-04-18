@@ -1,5 +1,5 @@
 "use client";
-
+import axios from 'axios';
 import React, { useState, useEffect } from "react";
 import { Container, Row, Col, Card, Form, Button } from "react-bootstrap";
 import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaEdit, FaSave, FaTimes } from "react-icons/fa";
@@ -18,12 +18,20 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (session?.user) {
-      setFormData({
-        name: session.user.name || "Người dùng",
-        email: session.user.email || "",
-        phone: session.user.phone || "",
-        address: session.user.address || ""
-      });
+      const fetchUserDetails = async () => {
+        try {
+          const res = await axios.get("/api/user-info");
+          setFormData({
+            name: session.user.name || "Người dùng",
+            email: session.user.email || "",
+            phone: res.data.phone || "",
+            address: res.data.address || ""
+          });
+        } catch (err) {
+          console.error("Lỗi khi lấy user info:", err);
+        }
+      };
+      fetchUserDetails();
     }
   }, [session]);
 
@@ -35,14 +43,46 @@ export default function ProfilePage() {
     }));
   };
 
-  const handleSave = () => {
-    // TODO: Xử lý lưu thông tin
-    setIsEditing(false);
-  };
-
   const handleCancel = () => {
     setIsEditing(false);
   };
+  const handleSave = async () => {
+    if (!session) {
+      alert("Vui lòng đăng nhập để cập nhật thông tin!");
+      return;
+    }
+
+    try {
+      if (!formData.phone || !formData.address) {
+        alert("Vui lòng điền đầy đủ thông tin");
+        return;
+      }
+
+      const response = await axios.post("/api/update-user-info", {
+        phone: formData.phone,
+        address: formData.address,
+      });
+
+      if (response.data.success) {
+        setIsEditing(false);
+
+        // Cập nhật lại formData để FE hiển thị
+        setFormData(prev => ({
+          ...prev,
+          phone: formData.phone,
+          address: formData.address,
+        }));
+
+        alert("Cập nhật thông tin thành công!");
+      } else {
+        alert("Có lỗi xảy ra khi cập nhật thông tin.");
+      }
+    } catch (error) {
+      console.error("Lỗi khi lưu thông tin:", error);
+      alert("Đã xảy ra lỗi, vui lòng thử lại.");
+    }
+  };
+
 
   const renderProfileContent = () => {
     return (
@@ -158,7 +198,7 @@ export default function ProfilePage() {
                     <img
                       src={session.user.image}
                       alt="Avatar"
-                      className={styles.avatar} 
+                      className={styles.avatar}
                     />
                   ) : (
                     <FaUser className={styles.avatar} />

@@ -27,7 +27,6 @@ export const authOptions = {
                 token.email = user.email;
                 token.name = user.name;
                 token.picture = user.image;
-                // token.phone = user.phone || null;
             }
             return token;
         },
