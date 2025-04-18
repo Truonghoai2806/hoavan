@@ -2,10 +2,11 @@
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import { getCategories } from "../util/api";
+import { useRouter } from "next/navigation";
 
 export default function CategorySection() {
   const [categories, setCategories] = useState([]);
-
+  const router = useRouter();
   useEffect(() => {
     const getCategory = async () => {
       const res = await getCategories();
@@ -28,7 +29,7 @@ export default function CategorySection() {
         <Row className="g-2 justify-content-center">
           {categories.map((item, index) => (
             <Col key={index} xs={6} sm={4} md={3} lg={2}>
-              <div className="category-item text-center">
+              <div className="category-item text-center" onClick={() => router.push(`/category/${item._id}`)}>
               <h4>{item.name}</h4>
               </div>
             </Col>

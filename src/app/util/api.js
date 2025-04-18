@@ -5,6 +5,13 @@ const getCategories = () => {
     return axios.get(URL_API,);
 }
 
+const getProductsByCategory = (categoryId) => {
+    const URL_API = `/product/category/${categoryId}`;
+    return axios.get(URL_API);
+};
+
+// ///////////////////////////////////////
+
 const getProducts = () => {
     const URL_API = "/product";
     return axios.get(URL_API);
@@ -14,6 +21,15 @@ const getProductById = (id) => {
     const URL_API = `/product/${id}`;
     return axios.get(URL_API);
 };
+
+const searchProduct = (name) => {
+    const URL_API = `/product/search?name=${encodeURIComponent(name)}`;
+    return axios.get(URL_API);
+};
+
+
+
+// ///////////////////////////////////////
 const addToCart = (data) => {
     const URL_API = "/cart";
     return axios.post(URL_API, data);
@@ -56,9 +72,6 @@ const removeFromCart = async (itemId, token) => {
     }
 };
 
-const searchProduct = (name) => {
-    const URL_API = `/product/search?name=${encodeURIComponent(name)}`;
-    return axios.get(URL_API);
-};
 
-export { getCategories, getProducts, getProductById, addToCart, getCart, removeFromCart, updateCartItem, searchProduct };
+
+export { getCategories, getProducts, getProductById, addToCart, getCart, removeFromCart, updateCartItem, searchProduct, getProductsByCategory };
