@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Container, Badge, Pagination } from 'react-bootstrap';
-import { getProductsByCategory } from '../util/api';
+import { getProductsByCategory, getCategories } from '../util/api';
 import styles from '../../styles/newarrivals.module.css';
 
 function formatPrice(price) {
@@ -19,18 +19,32 @@ export default function ProductByCategory() {
     const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
-        if (id) {
-            getProductsByCategory(id).then((res) => {
-                if (!res?.message) {
-                    setProducts(res || []);
-                    if (res[0]?.category?.name) {
-                        setCategoryName(res[0].category.name);
+        const fetchData = async () => {
+            if (id) {
+                try {
+                    // Fetch category name
+                    const categoriesResponse = await getCategories();
+                    if (!categoriesResponse?.message) {
+                        const category = categoriesResponse.find(cat => cat._id === id);
+                        if (category) {
+                            setCategoryName(category.name);
+                        }
                     }
-                } else {
-                    console.error(res.message);
+
+                    // Fetch products
+                    const productsResponse = await getProductsByCategory(id);
+                    if (!productsResponse?.message) {
+                        setProducts(productsResponse || []);
+                    } else {
+                        console.error(productsResponse.message);
+                    }
+                } catch (error) {
+                    console.error("Error fetching data:", error);
                 }
-            });
-        }
+            }
+        };
+
+        fetchData();
     }, [id]);
 
     const totalPages = Math.ceil(products.length / PRODUCTS_PER_PAGE);

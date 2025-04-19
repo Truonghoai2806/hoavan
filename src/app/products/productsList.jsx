@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Container, Button, Badge, Form, Row, Col, Pagination } from "react-bootstrap";
 import { FaTimes, FaFilter } from "react-icons/fa";
-import { getProducts, searchProduct } from "../util/api";
+import { getProducts, searchProduct, getCategories } from "../util/api";
 import styles from "./page.module.css";
 
 function formatPrice(price) {
@@ -12,6 +12,7 @@ function formatPrice(price) {
 
 export default function ProductsList() {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [priceRange, setPriceRange] = useState([0, 1000000]);
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -25,37 +26,46 @@ export default function ProductsList() {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        let response;
-        if (searchKeyword) {
-          response = await searchProduct(searchKeyword);
-        } else {
-          response = await getProducts();
+        // Fetch categories
+        const categoriesResponse = await getCategories();
+        if (!categoriesResponse?.message) {
+          setCategories(categoriesResponse);
         }
 
-        if (!response?.message) {
-          setProducts(response);
+        // Fetch products
+        let productsResponse;
+        if (searchKeyword) {
+          productsResponse = await searchProduct(searchKeyword);
         } else {
-          console.error("Error fetching products:", response.message);
+          productsResponse = await getProducts();
+        }
+
+        if (!productsResponse?.message) {
+          setProducts(productsResponse);
+        } else {
+          console.error("Error fetching products:", productsResponse.message);
         }
       } catch (error) {
-        console.error("Error fetching products:", error);
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
+    fetchData();
   }, [searchKeyword]);
-
-  const categories = Array.from(new Set(products.map(product => product.category?.name || product.category))).filter(Boolean);
 
   const filteredProducts = products.filter(product => {
     const priceMatch = product.price >= priceRange[0] && product.price <= priceRange[1];
     const categoryMatch = selectedCategories.length === 0 ||
-      (product.category && selectedCategories.includes(product.category?.name || product.category));
+      (product.category && selectedCategories.includes(
+        typeof product.category === 'object' && product.category !== null 
+          ? product.category._id 
+          : product.category
+      ));
     return priceMatch && categoryMatch;
   });
 
@@ -228,13 +238,13 @@ export default function ProductsList() {
                 <div className="d-flex flex-column gap-2">
                   {categories.map(category => (
                     <Button
-                      key={category}
-                      variant={selectedCategories.includes(category) ? "primary" : "outline-secondary"}
+                      key={category._id}
+                      variant={selectedCategories.includes(category._id) ? "primary" : "outline-secondary"}
                       size="sm"
-                      onClick={() => handleCategoryChange(category)}
+                      onClick={() => handleCategoryChange(category._id)}
                       className="text-start"
                     >
-                      {category}
+                      {category.name}
                     </Button>
                   ))}
                 </div>
