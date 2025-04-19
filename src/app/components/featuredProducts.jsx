@@ -15,15 +15,14 @@ export default function FeaturedProducts() {
 
   useEffect(() => {
     const getProduct = async () => {
-      const res = await getProducts();
-      if (!res?.message) {
-        const featuredProducts = res.filter(item => item.tags.includes("featured"));
-        setProducts(featuredProducts);
-      } else {
-        notification.error({
-          message: "Get user failed",
-          description: res.message,
-        });
+      try {
+        const res = await getProducts();
+        if (res && Array.isArray(res)) {
+          const featuredProducts = res.filter(item => item.tags && item.tags.includes("featured"));
+          setProducts(featuredProducts);
+        }
+      } catch (error) {
+        console.error("Error fetching featured products:", error);
       }
     };
     getProduct();
@@ -36,7 +35,6 @@ export default function FeaturedProducts() {
         <div className={styles.productGrid}>
           {products.map((item, index) => {
             const hasDiscount = item.discount > 0;
-            // Giảm giá
             const discountedPrice = hasDiscount
               ? item.price * (1 - item.discount / 100)
               : item.price;
@@ -48,12 +46,11 @@ export default function FeaturedProducts() {
                   style={{ backgroundImage: `url(${item.image})` }}
                   onClick={() => router.push(`/products/${item._id}`)}
                 >
-                  {item.tag && (
-                    <Badge bg="success" className={styles.productBadge}>
-                      {item.tag}
+                  {item.tags && item.tags.includes("new") && (
+                    <Badge bg="danger" className={styles.productBadge}>
+                      Hot
                     </Badge>
                   )}
-
                 </div>
                 <div className="product-info text-center py-3">
                   <h6 className="mb-1">{item.name}</h6>
@@ -77,4 +74,4 @@ export default function FeaturedProducts() {
       </Container>
     </section>
   );
-}
+} 

@@ -13,7 +13,9 @@ export default function CheckoutPage() {
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("credit_card");
+  const [paymentMethod, setPaymentMethod] = useState("atm");
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState(null);
   const [orderItems, setOrderItems] = useState([
     { name: "Áo thun nam cổ tròn", price: 200000, quantity: 2 },
     { name: "Quần jean nam", price: 300000, quantity: 1 },
@@ -22,15 +24,70 @@ export default function CheckoutPage() {
   // Tính tổng tiền
   const totalPrice = orderItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("Đơn hàng đã được xác nhận!");
+    setIsProcessing(true);
+    setError(null);
+
+    try {
+      // Validate form data
+      if (!name || !email || !address || !phone) {
+        throw new Error('Vui lòng điền đầy đủ thông tin');
+      }
+
+      // Tạo đơn hàng và lấy orderId
+      const orderId = Date.now().toString();
+      
+      // Gọi API tạo thanh toán
+      const response = await fetch('/api/payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderInfo: `Thanh toán đơn hàng ${orderId}`,
+          amount: totalPrice,
+          orderId: orderId,
+          paymentMethod: paymentMethod,
+          customerInfo: {
+            name,
+            email,
+            phone,
+            address
+          }
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Lỗi tạo thanh toán');
+      }
+
+      if (!data.success) {
+        throw new Error(data.message || 'Lỗi tạo thanh toán');
+      }
+
+      // Chuyển hướng đến trang thanh toán
+      window.location.href = data.data.paymentUrl;
+    } catch (error) {
+      console.error('Checkout error:', error);
+      setError(error.message);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
     <section className="py-5" style={{ background: "#fff" }}>
       <Container>
         <h3 className="text-center mb-4" style={{ color: "#333" }}>Thanh toán</h3>
+
+        {error && (
+          <div className="alert alert-danger" role="alert">
+            {error}
+          </div>
+        )}
 
         <Row>
           {/* Thông tin giao hàng */}
@@ -101,26 +158,40 @@ export default function CheckoutPage() {
                     <div>
                       <Form.Check
                         type="radio"
-                        label="Thẻ tín dụng"
+                        label="Thẻ ATM nội địa"
                         name="paymentMethod"
-                        value="credit_card"
-                        checked={paymentMethod === "credit_card"}
+                        value="atm"
+                        checked={paymentMethod === "atm"}
                         onChange={(e) => setPaymentMethod(e.target.value)}
                         className={styles.paymentOption}
                       />
                       <Form.Check
                         type="radio"
-                        label="Thanh toán khi nhận hàng"
+                        label="Internet Banking"
                         name="paymentMethod"
-                        value="cash_on_delivery"
-                        checked={paymentMethod === "cash_on_delivery"}
+                        value="banking"
+                        checked={paymentMethod === "banking"}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        className={styles.paymentOption}
+                      />
+                      <Form.Check
+                        type="radio"
+                        label="QR Code"
+                        name="paymentMethod"
+                        value="qr"
+                        checked={paymentMethod === "qr"}
                         onChange={(e) => setPaymentMethod(e.target.value)}
                         className={styles.paymentOption}
                       />
                     </div>
                   </Form.Group>
-                  <Button variant="outline-dark" type="submit" className={`w-40 ${styles.submitButton}`}>
-                    Xác nhận đơn hàng
+                  <Button 
+                    variant="outline-dark" 
+                    type="submit" 
+                    className={`w-40 ${styles.submitButton}`}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? 'Đang xử lý...' : 'Thanh toán'}
                   </Button>
                 </Form>
               </Card.Body>
@@ -151,7 +222,8 @@ export default function CheckoutPage() {
                   </ListGroup.Item>
                 </ListGroup>
                 <Badge bg="dark" className="mt-3 text-light">
-                  {paymentMethod === "credit_card" ? "Thẻ tín dụng" : "Thanh toán khi nhận hàng"}
+                  {paymentMethod === "atm" ? "Thẻ ATM nội địa" : 
+                   paymentMethod === "banking" ? "Internet Banking" : "QR Code"}
                 </Badge>
               </Card.Body>
             </Card>

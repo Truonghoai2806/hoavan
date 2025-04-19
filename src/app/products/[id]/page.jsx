@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Container, Row, Col, Button, Badge, Toast } from 'react-bootstrap';
-import { getProductById, addToCart } from '../../util/api';
+import { getProductById, addToCart, getCart } from '../../util/api';
 import { useSession } from 'next-auth/react';
 import styles from './page.module.css';
 
@@ -21,17 +21,14 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [cartItems, setCartItems] = useState([]);
 
   useEffect(() => {
     const getProductdetail = async () => {
       try {
         const res = await getProductById(id);
         if (res && res._id) {
-          const processedProduct = {
-            ...res,
-            sizes: Array.isArray(res.sizes) ? res.sizes.map(size => typeof size === 'object' ? size.size : size) : [],
-          };
-          setProduct(processedProduct);
+          setProduct(res);
         } else {
           console.error('Invalid product data:', res);
           setError('Không tìm thấy sản phẩm');
@@ -45,6 +42,47 @@ export default function ProductDetail() {
     };
     getProductdetail();
   }, [id]);
+
+  useEffect(() => {
+    const fetchCart = async () => {
+      if (status === 'authenticated') {
+        try {
+          const response = await getCart(session?.accessToken);
+          if (response && response.data) {
+            setCartItems(response.data.items || []);
+          }
+        } catch (error) {
+          console.error('Error fetching cart:', error);
+        }
+      }
+    };
+    fetchCart();
+  }, [status, session]);
+
+  const getAvailableQuantity = () => {
+    if (!selectedSize || !product) return 0;
+    
+    const sizeObj = product.sizes.find(s => s.size === selectedSize);
+    if (!sizeObj) return 0;
+
+    // Tìm số lượng đã có trong giỏ hàng
+    const cartItem = cartItems.find(item => 
+      item.product._id === product._id && item.size === selectedSize
+    );
+    const cartQuantity = cartItem ? cartItem.quantity : 0;
+
+    // Số lượng có thể thêm = số lượng tồn kho - số lượng đã có trong giỏ
+    return sizeObj.quantity - cartQuantity;
+  };
+
+  const handleQuantityChange = (newQuantity) => {
+    if (!selectedSize) return;
+    
+    const availableQuantity = getAvailableQuantity();
+    if (availableQuantity <= 0) return;
+    
+    setQuantity(Math.min(newQuantity, availableQuantity));
+  };
 
   if (loading) {
     return (
@@ -88,6 +126,13 @@ export default function ProductDetail() {
       return;
     }
 
+    const availableQuantity = getAvailableQuantity();
+    if (availableQuantity <= 0) {
+      setToastMessage('Số lượng sản phẩm trong kho không đủ');
+      setShowToast(true);
+      return;
+    }
+
     try {
       const response = await addToCart({
         productId: id,
@@ -99,6 +144,11 @@ export default function ProductDetail() {
       if (response) {
         setToastMessage('Đã thêm sản phẩm vào giỏ hàng');
         setShowToast(true);
+        // Cập nhật lại giỏ hàng sau khi thêm
+        const cartResponse = await getCart(session.accessToken);
+        if (cartResponse && cartResponse.data) {
+          setCartItems(cartResponse.data.items || []);
+        }
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -170,10 +220,10 @@ export default function ProductDetail() {
                 {product.sizes.map((size, index) => (
                   <button
                     key={index}
-                    className={`${styles.sizeItem} ${selectedSize === size ? styles.selected : ''}`}
-                    onClick={() => setSelectedSize(size)}
+                    className={`${styles.sizeItem} ${selectedSize === size.size ? styles.selected : ''}`}
+                    onClick={() => setSelectedSize(size.size)}
                   >
-                    {size}
+                    {size.size}
                   </button>
                 ))}
               </div>
@@ -184,7 +234,8 @@ export default function ProductDetail() {
               <div className={styles.quantityControl}>
                 <button
                   className={styles.quantityButton}
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  onClick={() => handleQuantityChange(quantity - 1)}
+                  disabled={quantity <= 1}
                 >
                   -
                 </button>
@@ -192,16 +243,25 @@ export default function ProductDetail() {
                   type="number"
                   min="1"
                   value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  onChange={(e) => {
+                    const newQuantity = parseInt(e.target.value) || 1;
+                    handleQuantityChange(newQuantity);
+                  }}
                   className={styles.quantityInput}
                 />
                 <button
                   className={styles.quantityButton}
-                  onClick={() => setQuantity(quantity + 1)}
+                  onClick={() => handleQuantityChange(quantity + 1)}
+                  disabled={!selectedSize || quantity >= getAvailableQuantity()}
                 >
                   +
                 </button>
               </div>
+              {selectedSize && (
+                <div className="text-muted small mt-2">
+                  Còn {getAvailableQuantity()} sản phẩm trong kho
+                </div>
+              )}
             </div>
 
             <div className={styles.actionButtons}>

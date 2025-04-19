@@ -17,6 +17,7 @@ export default function CartPage() {
   const [error, setError] = useState(null);
   const router = useRouter();
   const { data: session, status } = useSession();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -60,6 +61,21 @@ export default function CartPage() {
             return;
         }
 
+        // Find the current item to get product info
+        const currentItem = cart.items.find(item => item._id === id);
+        if (!currentItem) return;
+
+        // Get the size object from the product
+        const sizeObj = currentItem.product.sizes.find(s => s.size === currentItem.size);
+        if (!sizeObj) return;
+
+        // Limit the quantity to available stock
+        const maxQuantity = sizeObj.quantity;
+        if (newQuantity > maxQuantity) {
+            setError(`Số lượng tối đa có thể mua là ${maxQuantity}`);
+            return;
+        }
+
         setCart(prevCart => ({
             ...prevCart,
             items: prevCart.items.map(item => 
@@ -73,20 +89,28 @@ export default function CartPage() {
         const response = await updateCartItem(id, { quantity: newQuantity }, session?.accessToken);
         
         if (response.success) {
-            setCart(prevCart => ({
-                ...prevCart,
-                items: response.cart.items.map(serverItem => ({
-                    ...serverItem,
-                    product: prevCart.items.find(item => item._id === serverItem._id)?.product || serverItem.product
-                })),
-                total: response.cart.total
-            }));
+            const cartResponse = await getCart(session?.accessToken);
+            if (cartResponse && cartResponse.data) {
+                setCart(cartResponse.data);
+            }
             setError(null);
         } else {
-            setError(response.message);
+            if (response.message.includes('Insufficient stock')) {
+                setError('Số lượng sản phẩm trong kho không đủ');
+            } else {
+                setError(response.message);
+            }
+            const cartResponse = await getCart(session?.accessToken);
+            if (cartResponse && cartResponse.data) {
+                setCart(cartResponse.data);
+            }
         }
     } catch (error) {
         setError('Có lỗi xảy ra khi cập nhật số lượng');
+        const cartResponse = await getCart(session?.accessToken);
+        if (cartResponse && cartResponse.data) {
+            setCart(cartResponse.data);
+        }
     }
   };
 
@@ -110,6 +134,63 @@ export default function CartPage() {
         setError('Có lỗi xảy ra khi xóa sản phẩm');
         const cartResponse = await getCart(session?.accessToken);
         if (cartResponse) setCart(cartResponse);
+    }
+  };
+
+  const handleCheckout = async () => {
+    try {
+      setIsProcessing(true);
+      setError(null);
+
+      // Validate cart items
+      if (!cart.items || cart.items.length === 0) {
+        throw new Error('Giỏ hàng trống');
+      }
+
+      // Calculate total amount
+      const totalAmount = cart.items.reduce((total, item) => total + (item.product?.price || 0) * item.quantity, 0);
+      
+      // Create order
+      const orderId = Date.now().toString();
+      const orderInfo = `Thanh toán đơn hàng ${orderId}`;
+
+      // Call payment API
+      const response = await fetch('/api/payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderInfo,
+          amount: totalAmount,
+          orderId,
+          paymentMethod: 'atm', // Default payment method
+          customerInfo: {
+            name: 'Khách hàng', // You can get this from user session or form
+            email: 'customer@example.com',
+            phone: '0123456789',
+            address: 'Địa chỉ giao hàng'
+          }
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Lỗi tạo thanh toán');
+      }
+
+      if (!data.success) {
+        throw new Error(data.message || 'Lỗi tạo thanh toán');
+      }
+
+      // Redirect to payment URL
+      window.location.href = data.data.paymentUrl;
+    } catch (error) {
+      console.error('Checkout error:', error);
+      setError(error.message || 'Có lỗi xảy ra khi tạo đơn hàng');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -213,12 +294,18 @@ export default function CartPage() {
                           )}
                         </td>
                         <td>
-                          <div className="d-flex align-items-center">
+                          <div className={`d-flex align-items-center ${styles.quantityControls}`}>
                             <Button
                               variant="outline-secondary"
                               size="sm"
-                              className={`px-2 ${styles.btnOutlineSecondary}`}
-                              onClick={() => handleQuantityChange(item._id, item.quantity - 1)}
+                              className={`${styles.btnOutlineSecondary}`}
+                              onClick={() => {
+                                if (item.quantity <= 1) {
+                                  handleRemoveItem(item._id);
+                                } else {
+                                  handleQuantityChange(item._id, item.quantity - 1);
+                                }
+                              }}
                             >
                               <FaMinus />
                             </Button>
@@ -226,15 +313,27 @@ export default function CartPage() {
                               type="number"
                               value={item.quantity || 1}
                               min={1}
-                              className="mx-2"
-                              style={{ width: "60px" }}
-                              onChange={(e) => handleQuantityChange(item._id, parseInt(e.target.value))}
+                              max={item.product?.sizes?.find(s => s.size === item.size)?.quantity || 1}
+                              className={`${styles.quantityInput}`}
+                              onChange={(e) => {
+                                const newQuantity = parseInt(e.target.value);
+                                const maxQuantity = item.product?.sizes?.find(s => s.size === item.size)?.quantity || 1;
+                                if (newQuantity <= maxQuantity) {
+                                  handleQuantityChange(item._id, newQuantity);
+                                }
+                              }}
                             />
                             <Button
                               variant="outline-secondary"
                               size="sm"
-                              className={`px-2 ${styles.btnOutlineSecondary}`}
-                              onClick={() => handleQuantityChange(item._id, item.quantity + 1)}
+                              className={`${styles.btnOutlineSecondary}`}
+                              onClick={() => {
+                                const maxQuantity = item.product?.sizes?.find(s => s.size === item.size)?.quantity || 1;
+                                if (item.quantity < maxQuantity) {
+                                  handleQuantityChange(item._id, item.quantity + 1);
+                                }
+                              }}
+                              disabled={item.quantity >= (item.product?.sizes?.find(s => s.size === item.size)?.quantity || 1)}
                             >
                               <FaPlus />
                             </Button>
@@ -308,7 +407,12 @@ export default function CartPage() {
                 </div>
               </div>
 
-              <Button variant="danger" className="w-100 mt-3">
+              <Button 
+                variant="danger" 
+                className="w-100 mt-3"
+                onClick={handleCheckout}
+                disabled={isProcessing}
+              >
                 Thanh toán
               </Button>
             </div>

@@ -15,15 +15,14 @@ export default function NewArrivals() {
 
   useEffect(() => {
     const getProduct = async () => {
-      const res = await getProducts();
-      if (!res?.message) {
-        const newProducts = res.filter(item => item.tags.includes("new"));
-        setProducts(newProducts);
-      } else {
-        notification.error({
-          message: "Get user failed",
-          description: res.message,
-        });
+      try {
+        const res = await getProducts();
+        if (res && Array.isArray(res)) {
+          const newProducts = res.filter(item => item.tags && item.tags.includes("new"));
+          setProducts(newProducts);
+        }
+      } catch (error) {
+        console.error("Error fetching new products:", error);
       }
     };
     getProduct();
@@ -36,7 +35,6 @@ export default function NewArrivals() {
         <div className={styles.productGrid}>
           {products.map((item) => {
             const hasDiscount = item.discount > 0;
-            // Giảm giá
             const discountedPrice = hasDiscount
               ? item.price * (1 - item.discount / 100)
               : item.price;
@@ -48,9 +46,9 @@ export default function NewArrivals() {
                   style={{ backgroundImage: `url(${item.image})` }}
                   onClick={() => router.push(`/products/${item._id}`)}
                 >
-                  {item.tag && (
+                  {item.tags && item.tags.includes("new") && (
                     <Badge bg="success" className={styles.productBadge}>
-                      {item.tag}
+                      Mới
                     </Badge>
                   )}
                 </div>
@@ -74,7 +72,6 @@ export default function NewArrivals() {
           })}
         </div>
       </Container>
-
     </section>
   );
-}
+} 

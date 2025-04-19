@@ -267,3 +267,43 @@
     margin-top: 2rem;
   }
 }
+
+.tableResponsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.quantityControls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  min-width: 120px;
+}
+
+.quantityInput {
+  width: 50px !important;
+  min-width: 50px !important;
+  text-align: center;
+}
+
+.btnOutlineSecondary {
+  padding: 0.25rem 0.5rem;
+  min-width: 32px;
+}
+
+@media (max-width: 768px) {
+  .quantityControls {
+    min-width: 100px;
+  }
+  
+  .quantityInput {
+    width: 40px !important;
+    min-width: 40px !important;
+  }
+  
+  .btnOutlineSecondary {
+    padding: 0.25rem 0.4rem;
+    min-width: 28px;
+  }
+}
