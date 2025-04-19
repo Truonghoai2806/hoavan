@@ -2,19 +2,20 @@
 import React from "react";
 import { Carousel, Button, Container } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
+import Link from "next/link";
 
 export default function BannerCarousel() {
   return (
     <div style={{ overflow: "hidden" }}>
-      <Carousel fade interval={4000} controls indicators wrap={true} pause={false}>
+      <Carousel fade interval={5000} controls indicators wrap={true} pause={false}>
         {/* Slide 1 */}
         <Carousel.Item>
-          <div className="banner-slide" style={{ backgroundImage: `url("https://images.unsplash.com/photo-1581235720704-cd2c0c1c2b84?auto=format&fit=crop&w=1400&q=80")` }}>
+        <div className="banner-slide" style={{ backgroundImage: `url("https://images.unsplash.com/photo-1520975922038-6b1b809de7b1?auto=format&fit=crop&w=1400&q=80")` }}>
             <div className="overlay">
               <Container className="text-center text-white">
-                <h1 className="banner-title">Mua sắm dễ dàng</h1>
-                <p className="banner-subtitle">Khám phá hàng ngàn sản phẩm với ưu đãi mỗi ngày</p>
-                <Button variant="light" size="lg">Xem ngay</Button>
+                <h1 className="banner-title">Bộ sưu tập xuân hè</h1>
+                <p className="banner-subtitle">Phong cách thời trang mới nhất cho bạn</p>
+                <Link href="/products"><Button variant="light" size="lg">Mua ngay</Button></Link>
               </Container>
             </div>
           </div>
@@ -22,12 +23,12 @@ export default function BannerCarousel() {
 
         {/* Slide 2 */}
         <Carousel.Item>
-          <div className="banner-slide" style={{ backgroundImage: `url("https://images.unsplash.com/photo-1607082350899-566a9ef53c85?auto=format&fit=crop&w=1400&q=80")` }}>
+          <div className="banner-slide" style={{ backgroundImage: `url("https://images.unsplash.com/photo-1520974721673-67a5f0f39c4f?auto=format&fit=crop&w=1400&q=80")` }}>
             <div className="overlay">
               <Container className="text-center text-white">
-                <h1 className="banner-title">Ưu đãi đặc biệt</h1>
-                <p className="banner-subtitle">Mua 1 tặng 1, giảm sốc lên đến 70%</p>
-                <Button variant="light" size="lg">Mua ngay</Button>
+                <h1 className="banner-title">Giảm giá cực sốc</h1>
+                <p className="banner-subtitle">Ưu đãi lên đến 50% cho đơn hàng đầu tiên</p>
+                <Link href="/products"><Button variant="light" size="lg">Mua ngay</Button></Link>
               </Container>
             </div>
           </div>
@@ -35,12 +36,12 @@ export default function BannerCarousel() {
 
         {/* Slide 3 */}
         <Carousel.Item>
-          <div className="banner-slide" style={{ backgroundImage: `url("https://images.unsplash.com/photo-1606817665080-2887ec90f779?auto=format&fit=crop&w=1400&q=80")` }}>
+          <div className="banner-slide" style={{ backgroundImage: `url("https://images.unsplash.com/photo-1520975922038-6b1b809de7b1?auto=format&fit=crop&w=1400&q=80")` }}>
             <div className="overlay">
               <Container className="text-center text-white">
-                <h1 className="banner-title">Hỗ trợ 24/7</h1>
-                <p className="banner-subtitle">Đội ngũ tư vấn luôn sẵn sàng giúp bạn</p>
-                <Button variant="light" size="lg">Liên hệ</Button>
+                <h1 className="banner-title">Thời trang nam & nữ</h1>
+                <p className="banner-subtitle">Khám phá các mẫu thiết kế phù hợp với mọi phong cách</p>
+                <Link href="/products"><Button variant="light" size="lg">Xem bộ sưu tập</Button></Link>
               </Container>
             </div>
           </div>
@@ -49,7 +50,7 @@ export default function BannerCarousel() {
 
       <style jsx>{`
         .banner-slide {
-          height: 400px;
+          height: 450px;
           background-size: cover;
           background-position: center;
           display: flex;
@@ -58,7 +59,7 @@ export default function BannerCarousel() {
         }
 
         .overlay {
-          background: rgba(0, 0, 0, 0.5);
+          background: rgba(0, 0, 0, 0.4);
           width: 100%;
           height: 100%;
           display: flex;
@@ -67,19 +68,19 @@ export default function BannerCarousel() {
         }
 
         .banner-title {
-          font-size: 48px;
-          font-weight: bold;
-          margin-bottom: 20px;
+          font-size: 52px;
+          font-weight: 600;
+          margin-bottom: 16px;
         }
 
         .banner-subtitle {
-          font-size: 20px;
-          margin-bottom: 30px;
+          font-size: 22px;
+          margin-bottom: 28px;
         }
 
         @media (max-width: 768px) {
           .banner-title {
-            font-size: 32px;
+            font-size: 34px;
           }
 
           .banner-subtitle {
