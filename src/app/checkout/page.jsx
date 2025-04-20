@@ -1,28 +1,75 @@
 'use client';
-import React, { useState } from "react";
-import { Container, Row, Col, Form, Button, Card, ListGroup, Badge, InputGroup, FormControl } from "react-bootstrap";
-import { FaCreditCard, FaShippingFast, FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaMoneyBillWave } from "react-icons/fa";
-import styles from "./page.module.css";  // Add your CSS module for custom styling
+import React, { useState, useEffect } from "react";
+import { Container, Row, Col, Form, Button, Card, ListGroup, Badge, InputGroup, FormControl, Alert } from "react-bootstrap";
+import { FaShippingFast, FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaMoneyBillWave, FaExclamationTriangle } from "react-icons/fa";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { getCart } from "../util/api";
+import styles from "./page.module.css";
 
 function formatPrice(price) {
   return price.toLocaleString("vi-VN") + "đ";
 }
 
 export default function CheckoutPage() {
+  const { data: session } = useSession();
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("atm");
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState(null);
-  const [orderItems, setOrderItems] = useState([
-    { name: "Áo thun nam cổ tròn", price: 200000, quantity: 2 },
-    { name: "Quần jean nam", price: 300000, quantity: 1 },
-  ]);
+  const [orderItems, setOrderItems] = useState([]);
   
+  useEffect(() => {
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+
+    // Set user information from session
+    setName(session.user?.name || "");
+    setEmail(session.user?.email || "");
+    setPhone(session.user?.phone || "");
+    setAddress(session.user?.address || "");
+
+    // Fetch additional user info only if phone or address is missing
+    const fetchUserInfo = async () => {
+      if (!session.user?.phone || !session.user?.address) {
+        try {
+          const res = await fetch('/api/user-info');
+          const data = await res.json();
+          if (data) {
+            if (!session.user?.phone) setPhone(data.phone || "");
+            if (!session.user?.address) setAddress(data.address || "");
+          }
+        } catch (error) {
+          console.error('Error fetching user info:', error);
+        }
+      }
+    };
+
+    fetchUserInfo();
+
+    // Fetch cart items
+    const fetchCartItems = async () => {
+      try {
+        const response = await getCart(session.accessToken);
+        if (response && response.items) {
+          setOrderItems(response.items);
+        }
+      } catch (error) {
+        console.error('Error fetching cart items:', error);
+        setError('Không thể tải giỏ hàng. Vui lòng thử lại.');
+      }
+    };
+
+    fetchCartItems();
+  }, [session, router]);
+
   // Tính tổng tiền
-  const totalPrice = orderItems.reduce((total, item) => total + item.price * item.quantity, 0);
+  const totalPrice = orderItems.reduce((total, item) => total + (item.product?.price || 0) * item.quantity, 0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,41 +82,43 @@ export default function CheckoutPage() {
         throw new Error('Vui lòng điền đầy đủ thông tin');
       }
 
-      // Tạo đơn hàng và lấy orderId
-      const orderId = Date.now().toString();
+      // Validate phone number format
+      const phoneRegex = /^0\d{9}$/;
+      if (!phoneRegex.test(phone)) {
+        throw new Error('Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại Việt Nam (10 số)');
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new Error('Email không hợp lệ. Vui lòng kiểm tra lại.');
+      }
+
+      // Validate cart items
+      if (!orderItems || orderItems.length === 0) {
+        throw new Error('Giỏ hàng trống. Vui lòng thêm sản phẩm vào giỏ hàng.');
+      }
+
+      // Update user info if phone or address is changed
+      if (phone !== session.user?.phone || address !== session.user?.address) {
+        const updateResponse = await fetch('/api/user-info', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ phone, address })
+        });
+
+        if (!updateResponse.ok) {
+          throw new Error('Có lỗi xảy ra khi cập nhật thông tin');
+        }
+      }
+
+      // TODO: Implement actual payment integration here
+      // For now, just show a success message
+      alert('Đơn hàng đã được tạo thành công!');
+      router.push('/orders');
       
-      // Gọi API tạo thanh toán
-      const response = await fetch('/api/payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          orderInfo: `Thanh toán đơn hàng ${orderId}`,
-          amount: totalPrice,
-          orderId: orderId,
-          paymentMethod: paymentMethod,
-          customerInfo: {
-            name,
-            email,
-            phone,
-            address
-          }
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Lỗi tạo thanh toán');
-      }
-
-      if (!data.success) {
-        throw new Error(data.message || 'Lỗi tạo thanh toán');
-      }
-
-      // Chuyển hướng đến trang thanh toán
-      window.location.href = data.data.paymentUrl;
     } catch (error) {
       console.error('Checkout error:', error);
       setError(error.message);
@@ -84,9 +133,10 @@ export default function CheckoutPage() {
         <h3 className="text-center mb-4" style={{ color: "#333" }}>Thanh toán</h3>
 
         {error && (
-          <div className="alert alert-danger" role="alert">
+          <Alert variant="danger" className="mb-4">
+            <FaExclamationTriangle className="me-2" />
             {error}
-          </div>
+          </Alert>
         )}
 
         <Row>
@@ -135,6 +185,9 @@ export default function CheckoutPage() {
                         className={styles.input}
                       />
                     </InputGroup>
+                    <Form.Text className="text-muted">
+                      Nhập số điện thoại Việt Nam (10-11 số)
+                    </Form.Text>
                   </Form.Group>
 
                   <Form.Group className="mb-3">
@@ -152,46 +205,13 @@ export default function CheckoutPage() {
                     </InputGroup>
                   </Form.Group>
 
-                  {/* Phương thức thanh toán */}
-                  <Form.Group className="mb-3">
-                    <Form.Label>Phương thức thanh toán</Form.Label>
-                    <div>
-                      <Form.Check
-                        type="radio"
-                        label="Thẻ ATM nội địa"
-                        name="paymentMethod"
-                        value="atm"
-                        checked={paymentMethod === "atm"}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                        className={styles.paymentOption}
-                      />
-                      <Form.Check
-                        type="radio"
-                        label="Internet Banking"
-                        name="paymentMethod"
-                        value="banking"
-                        checked={paymentMethod === "banking"}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                        className={styles.paymentOption}
-                      />
-                      <Form.Check
-                        type="radio"
-                        label="QR Code"
-                        name="paymentMethod"
-                        value="qr"
-                        checked={paymentMethod === "qr"}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                        className={styles.paymentOption}
-                      />
-                    </div>
-                  </Form.Group>
                   <Button 
                     variant="outline-dark" 
                     type="submit" 
                     className={`w-40 ${styles.submitButton}`}
                     disabled={isProcessing}
                   >
-                    {isProcessing ? 'Đang xử lý...' : 'Thanh toán'}
+                    {isProcessing ? 'Đang xử lý...' : 'Đặt hàng'}
                   </Button>
                 </Form>
               </Card.Body>
@@ -209,22 +229,23 @@ export default function CheckoutPage() {
                   {orderItems.map((item, index) => (
                     <ListGroup.Item key={index} className={styles.orderItem}>
                       <div className="d-flex justify-content-between">
-                        <span>{item.name} x{item.quantity}</span>
-                        <span>{formatPrice(item.price * item.quantity)}</span>
+                        <span>
+                          {item.product?.name} x{item.quantity}
+                          {item.size && <span className="ms-2">(Size: {item.size})</span>}
+                        </span>
+                        <span>{formatPrice((item.product?.price || 0) * item.quantity)}</span>
                       </div>
                     </ListGroup.Item>
                   ))}
                   <ListGroup.Item className={styles.orderSummary}>
                     <div className="d-flex justify-content-between">
                       <span className="fw-bold">Tổng tiền</span>
-                      <span>{formatPrice(totalPrice)}</span>
+                      <span className="fw-bold text-danger">
+                        {formatPrice(totalPrice)}
+                      </span>
                     </div>
                   </ListGroup.Item>
                 </ListGroup>
-                <Badge bg="dark" className="mt-3 text-light">
-                  {paymentMethod === "atm" ? "Thẻ ATM nội địa" : 
-                   paymentMethod === "banking" ? "Internet Banking" : "QR Code"}
-                </Badge>
               </Card.Body>
             </Card>
           </Col>

@@ -147,45 +147,8 @@ export default function CartPage() {
         throw new Error('Giỏ hàng trống');
       }
 
-      // Calculate total amount
-      const totalAmount = cart.items.reduce((total, item) => total + (item.product?.price || 0) * item.quantity, 0);
-      
-      // Create order
-      const orderId = Date.now().toString();
-      const orderInfo = `Thanh toán đơn hàng ${orderId}`;
-
-      // Call payment API
-      const response = await fetch('/api/payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          orderInfo,
-          amount: totalAmount,
-          orderId,
-          paymentMethod: 'atm', // Default payment method
-          customerInfo: {
-            name: 'Khách hàng', // You can get this from user session or form
-            email: 'customer@example.com',
-            phone: '0123456789',
-            address: 'Địa chỉ giao hàng'
-          }
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Lỗi tạo thanh toán');
-      }
-
-      if (!data.success) {
-        throw new Error(data.message || 'Lỗi tạo thanh toán');
-      }
-
-      // Redirect to payment URL
-      window.location.href = data.data.paymentUrl;
+      // Redirect to checkout page
+      router.push('/checkout');
     } catch (error) {
       console.error('Checkout error:', error);
       setError(error.message || 'Có lỗi xảy ra khi tạo đơn hàng');
